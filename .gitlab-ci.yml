@@ -1,0 +1,15 @@
+stages:
+  - deploy
+
+deploy_alpha:
+  stage: deploy
+  image: node:18-alpine
+  environment:
+    name: alpha
+  only:
+    - dev
+  script:
+    - npm install -g pnpm
+    - pnpm install --no-frozen-lockfile 
+    - pnpm generate
+    - npx netlify-cli deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --prod --message "$(git log -1 --pretty=%B)"

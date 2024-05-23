@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  color: var(--black-color);
+}
+
+@layer base {
+  :root {
+    --primary-color: #1F1F1F;
+    --primary-hover: #00C3F41A;
+    --secondary-color: #EAEAEA;
+    --info-color: #F9F9F9;
+    --gray-color: #828282;
+    --black-color: #333333;
+    --success-color: #27AE60;
+    --error-color: #D21111;
+    --border-color: #E0E0E0;
+    --light-color: #FAFAFA;
+    --yellow-color: #F2C94C;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .tooltip {
+    @apply invisible absolute;
+  }
+  
+  .has-tooltip:hover .tooltip {
+    @apply visible z-50;
+  }
+  button.btn-primary, [type=button].btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-3xl border-[1px] border-solid border-primary hover:bg-white hover:text-primary;
+    transition: color 200ms ease, background-color 200ms ease;
+  }
+  button.btn-primary-darken, [type=button].btn-primary-darken {
+    @apply px-6 py-3 bg-primary-darken text-white rounded-3xl border-[1px] border-solid border-primary-darken hover:bg-white hover:text-primary-darken;
+    transition: color 200ms ease, background-color 200ms ease;
+  }
+  button.btn-outline-primary, [type=button].btn-outline-primary {
+    @apply px-6 py-3 bg-white text-primary rounded-3xl border-[1px] border-solid border-primary hover:bg-primary hover:text-white;
+    transition: color 200ms ease, background-color 200ms ease;
+  }
+  button.btn-outline-primary-darken, [type=button].btn-outline-primary-darken {
+    @apply px-6 py-3 bg-primary-darken text-white rounded-3xl border-[1px] border-solid border-primary-darken hover:bg-white hover:text-primary-darken;
+    transition: color 200ms ease, background-color 200ms ease;
+  }
+  /* select {
+    @apply relative py-2 pl-4 pr-12 text-xl outline outline-1 outline-[#CBCBCB] rounded-full w-full bg-white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url(/svg/chevron-down.svg);
+    background-position: calc(100% - 16px) calc(100% - 8px);
+    background-size: 14px;
+    background-repeat: no-repeat;
+  } */
+  b, strong { 
+    font-weight: 600;
+  }
+  section .swiper {
+    --swiper-navigation-size: 12px;
+    --swiper-navigation-color: #167F57;
+  }
+  section .swiper-button-prev,
+  section .swiper-button-next {
+    padding: 18px;
+    border-radius: 100%;
+    background-color: #EAEFE4;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  opacity: 1;
+  transition: opacity ease-in-out .5s;
+}
+
+.fade-enter,
+.fade-leave-to{
+  opacity: 0;
+}
