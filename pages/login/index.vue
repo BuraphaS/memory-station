@@ -43,19 +43,13 @@ function scrollDown (): void {
     modal.value = true
   }
 }
-function raplace() {
-  if (user) {
-    router.replace('/')
-  }
-}
 onMounted((): void => {
-  // raplace()
+  if (user) {
+    router.push('/')
+  }
   window.addEventListener('scroll', scrollDown)
   fetchPosts()
 })
-// onUnmounted((): void => {
-//   window.removeEventListener('scroll', scrollDown)
-// })
 </script>
 
 <style scoped>
