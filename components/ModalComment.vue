@@ -6,7 +6,7 @@
           <div class="px-5 py-4">
             <div class="flex items-start justify-between">
               <span 
-                v-if="user.id"
+                v-if="user.id == postData?.uid"
                 class="text-xl cursor-pointer mdi mdi-cog-outline"
                 @click="openSetting()"></span>
               <span v-else></span>
@@ -22,8 +22,8 @@
             <ProductDetailImage
               class="flex items-start justify-center px-3"
               :images="postData.image" />
-            <div class="p-4 border-l-2 border-gray">
-              <div class="flex gap-6 pb-4 border-b">
+            <div class="p-4 border-l border-border">
+              <div class="flex gap-6 pb-4">
                 <img
                   :src="profile.image"
                   alt="profile"
@@ -32,39 +32,89 @@
                   {{ profile.username }}
                 </div>
               </div>
+              <div
+                class="flex items-center justify-between pb-4 border-b border-border">
+                <div
+                  class="cursor-pointer"
+                  @click="toggleLike">
+                  <span 
+                    :class="[
+                      'flex items-center px-2 py-1 space-x-1 text-xs font-medium rounded-full h-min w-min',
+                      isLiked ? 'text-rose-600 bg-rose-50' : 'text-gray-400 bg-gray-700 hover:text-rose-600 hover:bg-rose-50'
+                    ]">
+                    <p :class="['flex gap-2 text-xl font-semibold mdi', isLiked ? 'mdi-heart text-[#FFC0CB]' : 'mdi-heart']">
+                      <span>{{ like.length }}</span>
+                    </p>
+                  </span>
+                </div>
+                <StarRating 
+                  :id="postData.id"/>
+              </div>
               <div class="flex flex-col">
                 <span class="pl-4 my-2 text-xl font-medium">{{ postData.topic }}</span>
                 <span>
                   {{ postData.description }}
                 </span>
               </div>
-              <div class="my-4 border-b-2 border-gray"></div>
-              <div
-                v-for="(item, index) in comment"
-                :key="index"
-                class="flex flex-col gap-2">
-                <div class="flex gap-4">
-                  <img
-                    :src="item.image"
-                    alt="profile"
-                    class="w-[55px] h-[55px] rounded-full object-cover">
-                  <span class="flex items-center font-semibold cursor-pointer"
-                    @click="toProfile(item.uid)">
-                    {{ item.username }}
-                  </span>
+              <div class="my-4 border-b border-border"></div>
+              <div class="overflow-auto h-[500px]">
+                <div
+                  v-for="(item, index) in comment"
+                  :key="index"
+                  class="flex flex-col gap-2">
+                  <div class="flex gap-4">
+                    <img
+                      :src="item.image"
+                      alt="profile"
+                      class="w-[55px] h-[55px] rounded-full object-cover">
+                    <div class="flex items-center justify-between w-full">
+                      <div class="flex items-center font-semibold cursor-pointer"
+                        @click="toProfile(item.uid)">
+                        {{ item.username }}
+                      </div>
+                      <div
+                        v-if="item.uid === user.id || postData.uid === user.id"
+                        class="relative flex items-center text-xl cursor-pointer mdi mdi-settings-helper"
+                        @click="toggleDropdown(item.id)">
+                        <div 
+                          v-if="isDropdownOpen === item.id"
+                          class="absolute top-0 z-10 w-32 mt-2 origin-top-right bg-white rounded-md shadow-lg right-1 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div class="py-1">
+                            <button
+                              v-if="item.uid === user.id" 
+                              class="flex block gap-4 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 mdi mdi-pencil-box-multiple-outline"
+                              @click="editComments(item.id)">Edit</button>
+                            <button
+                              class="flex block gap-4 px-4 py-2 text-sm text-red-700 mdi mdi-delete-outline hover:bg-gray-100"
+                              @click="deleteComment(item.id)">Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ml-8">
+                    <span
+                      v-if="editComment === item.id"
+                      class="text-sm font-light">
+                      <InputTextField
+                        :value="item.comment"
+                        outlined
+                        autofocus
+                        @keypress.enter="sendEditComment($event.target.value, item.id)"/>
+                      </span>
+                    <span
+                      v-else
+                      class="text-sm font-light">{{ item.comment }}</span>
+                  </div>
+                  <div class="my-1 border-b border-border"></div>
                 </div>
-                <div class="ml-8">
-                  <span>
-                    {{ item.comment }}
-                  </span>
-                </div>
-                <div class="my-1 border-b-2 border-gray"></div>
               </div>
               <div class="relative">
                 <textarea 
                   v-model="newComment"
                   class="relative w-full p-4 mt-8 border rounded-xl" 
-                  placeholder="Comment" />
+                  placeholder="Comment" 
+                  @keypress.enter="sendComment()"/>
                 <span class="absolute text-2xl -rotate-45 cursor-pointer top-14 right-3 mdi mdi-send"
                   @click="sendComment()"></span>
               </div>
@@ -75,7 +125,6 @@
             <ModalUpdate
               :modal="true"
               :form="postData.id"
-              @update="updatePost"
               @close-modal="handleCloseModal()"
               @on-action="handleAction($event)"/>
           </div>
@@ -111,31 +160,42 @@ interface IForm {
   uid: string
 }
 interface IComment {
+  id: any
   uid: string
   comment: string
   username?: string
   image?: string
 }
-interface IRating {
-  value: any
+interface ILike {
+  uid: string
+  status: any
 }
-const postData: Ref<any> = ref()
+const postData: Ref<IForm> = ref()
 const newComment: Ref<any> = ref('')
 const profile: Ref<any> = ref()
 const props = defineProps<IProps>()
 const form: Ref<any> = ref()
 
 const loading = ref(true)
-const comment: Ref<any> = ref([])
+const comment: Ref<IComment[]> = ref([])
 const step: Ref<any> = ref(1)
 const myProfile: Ref<any> = ref()
 const postCreate: Ref<boolean> = ref(false)
-  
+const like: Ref<ILike[]> = ref([])
+const isDropdownOpen = ref(null)
+const editComment = ref(null)
+
 function openSetting (): void {
   step.value++
 }
 function handleCloseModal() {
     postCreate.value = false;
+}
+const toggleDropdown = (id: any): void => {
+  isDropdownOpen.value = isDropdownOpen.value === id ? null : id
+}
+const editComments = (id: any): void => {
+  editComment.value = editComment.value === id ? null : id
 }
 async function fetchProfile (id: any): Promise<void> {
   try {
@@ -165,7 +225,8 @@ async function fetchPost (): Promise<void> {
     } else {
       postData.value = data[0]
       await fetchProfile(postData.value.uid)
-      await fetchProfileComment(postData.value.comment)
+      await fetchComment()
+      await fetchLike()
     }
   } catch (error) {
     console.log(error); 
@@ -188,130 +249,169 @@ async function fetchMyProfile (): Promise<void> {
     console.log(error); 
   }
 }
-const selectedImage = ref<string[]>([])
-async function fetchProfileComment(comments: any): Promise<void> {
-  try {
-    const commentPromises = comments.map(async (comment: IComment) => {
-      const { data, error } = await supabase
-        .from('user')
-        .select('username, image')
-        .eq('uid', comment.uid)
-        .single();
 
-      if (error) {
-        console.error(`Error fetching user data for UID ${comment.uid}:`, error);
+async function fetchProfileComment(comments: IComment[]): Promise<void> {
+  try {
+    const userUids = comments.map(c => c.uid)
+    const { data, error } = await supabase
+      .from('user')
+      .select('uid, username, image')
+      .in('uid', userUids)
+
+    if (error) {
+      console.error('Error fetching user data:', error)
+    } else {
+      const userMap = new Map(data.map(user => [user.uid, user]))
+      comments.forEach(c => {
+        const user = userMap.get(c.uid)
+        if (user) {
+          c.username = user.username
+          c.image = user.image
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Error:', error)
+  }
+}
+async function fetchComment(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+        .from('comment')
+        .select('*')
+        .eq('postId', postData.value.id)
+    if (error) {
+        console.error(`Error fetching user data for UID ${comment}:`, error);
       } else {
-        return {
-          ...comment,
-          username: data.username,
-          image: data.image,
-        };
+        comment.value = data
+        await fetchProfileComment(comment.value)
       }
-    })
-    const resolvedComments = await Promise.all(commentPromises);
-    comment.value = resolvedComments.filter(Boolean)
   } catch (error) {
     console.error('Error:', error);
   } finally {
     loading.value = false;
   }
 }
-
-async function sendComment(): Promise<void> {
-  if (newComment.value.trim()) {
-    const commentData: IComment = {
-      ...postData.value.comment,
-      uid: user.value.id,
-      comment: newComment.value.trim()
+async function sendEditComment(event: any, id: any): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('comment')
+      .update({ 
+        comment: event,
+        uid: user.value.id,
+        postId: postData.value.id
+        } as never)
+      .eq('id', id)
+      .select()
+    if (error) {
+      console.error('Error updating post comments:', error)
+    } else {
+      editComment.value = null
+      await fetchComment()
     }
-    comment.value.push(
-      {
-      uid: user.value.id,
-      comment: newComment.value.trim(),
-      username: myProfile.value.username,
-      image: myProfile.value.image,
-      }
-    )
-    postData.value.comment = commentData
-
+  } catch (error) {
+    console.error('Error saving new comment:', error)
+  }
+}
+async function deleteComment(id: any): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('comment')
+      .delete()
+      .eq('id', id)
+      .select()
+    if (error) {
+      console.error('Error updating post comments:', error)
+    } else {
+      await fetchComment()
+    }
+  } catch (error) {
+    console.error('Error saving new comment:', error)
+  }
+}
+async function sendComment(): Promise<void> {
     try {
       const { data, error } = await supabase
-        .from('post')
-        .update({ comment: postData.value.comment } as never)
-        .eq('id', postData.value.id)
+        .from('comment')
+        .insert({ 
+          comment: newComment.value,
+          uid: user.value.id,
+          postId: postData.value.id
+         } as never)
+        .select()
       if (error) {
         console.error('Error updating post comments:', error)
+      } else {
+        newComment.value = ''
+        await fetchComment()
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
     }
   }
-}
-function generateRandomFilename(extension: string): string {
-  const randomString = Math.random().toString(36).substring(2, 15);
-  return `${randomString}.${extension}`;
-}
-async function uploadImage(file: File,uid: string): Promise<string | null> {
+// }
+async function fetchLike(): Promise<void> {
   try {
-    const extension = file.name.split('.').pop();
-    const randomFilename = generateRandomFilename(extension || 'jpg');
-
-    const { data, error } = await supabase.storage
-      .from('post')
-      .upload(`post/${randomFilename}`, file);
-
-    if (data) {
-
-    }
+    const { data, error } = await supabase
+        .from('like')
+        .select('status, uid')
+        .eq('postId', postData.value.id)
     if (error) {
-      console.error('Error uploading image:', error);
-      return null;
-    }
-    return `https://fhxsoitvmpbsbhoqlewr.supabase.co/storage/v1/object/public/post/post/${randomFilename}`
+        console.error(`Error fetching user data for UID ${comment}:`, error);
+      } else {
+        like.value = data
+      }
   } catch (error) {
-    console.error('Error in uploadImage:', error);
-    return null;
+    console.error('Error:', error);
+  } finally {
+    loading.value = false;
   }
 }
-// async function updatePost(form: any): Promise<void> {
-//   try {
-//     const imageUrls: string[] = [];
-//     for (const file of form.image) {
-//       const url: any = await uploadImage(file,form.uid);
-//       if (url) {
-//         imageUrls.push(url);
-//       }
-//     }
-//     const { data, error } = await supabase
-//     .from('post')
-//     .update({
-//       uid: form.uid,
-//       topic: form.topic,
-//       description: form.description,
-//       type: form.type,
-//       rating: form.rating,
-//       like: form.like,
-//       image: form.image
-//     } as never)
-//     .eq('id', props.id)
-//     .select()
-//     if (error) {
-//       console.error('Error creating post:', error);
-//     } else {
-//       // cardInfo.value.push(data)
-//       console.log('Post created successfully:', data);
-//     }
-//   }catch (error) {
-//     console.log(error, 'error')
-//   }finally{
-//     handleCloseModal()
-//   }
-//   console.log(form)
-  
-// }
-// function removeImage(index: number) {
-//   form.value.img.splice(index, 1)
-// }
+async function sendLike(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('like')
+        .insert({ 
+          status: true,
+          uid: user.value.id,
+          postId: postData.value.id
+         } as never)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchLike()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+async function deleteLike(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('like')
+        .delete()
+        .eq('uid', user.value.id)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchLike()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+const isLiked = computed(() => {
+  return like.value.some(like => like.uid === user.value?.id)
+})
+const toggleLike = async (): Promise<void> => {
+  if (isLiked.value) {
+    await deleteLike();
+  } else {
+    await sendLike();
+  }
+}
 const emits = defineEmits()
 
 function closeModal(): void {

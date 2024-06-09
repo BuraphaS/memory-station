@@ -2,8 +2,8 @@
   <section id="home-page">
     <div class="container flex flex-col items-center gap-4 my-20 mt-8 sm:gap-8 md:gap-16">
       <div
-        v-for="(items, index) in cardInfo"
-        :key="index">
+        v-for="(items) in postData.slice().reverse()"
+        :key="items.id">
         <Card :form="items"/>
       </div>
     </div>
@@ -22,30 +22,11 @@
 <script setup lang="ts">
 const client = useSupabaseClient()
 
-// async function uploadImage(image: any): Promise<void> {
-//   try {
-//     const { data, error } = await client
-//     .storage
-//     .from('post')
-//     .createSignedUrls(image.name, image)
-//   if (error) alert('Error', error)
-//   } catch (error) {
-//     console.log(error, 'error')
-//   }
-// }
 function generateRandomFilename(extension: string): string {
   const randomString = Math.random().toString(36).substring(2, 15);
   return `${randomString}.${extension}`;
 }
-// async function getImage (): Promise<void> {
-//   const { data, error} = await client.storage
-//     .from('post')
-//     .list('public', {
-//       limit: 100,
-//       offset: 0,
-//       sortBy: {column: 'image', order:'asc'}
-//     })
-// }
+
 async function uploadImage(file: File,uid: string): Promise<string | null> {
   try {
     const extension = file.name.split('.').pop();
@@ -70,6 +51,7 @@ async function uploadImage(file: File,uid: string): Promise<string | null> {
 }
 
 const postCreate: Ref<boolean> = ref(false)
+const postData: Ref<any> = ref([])
   
 function openCreate (): void {
     postCreate.value = true
@@ -81,12 +63,12 @@ async function fetchPosts(): Promise<void> {
   try {
     const { data, error } = await client
     .from('post')
-    .select(`*`)
+    .select('*')
     .eq('type', 'Food')
     if (error) {
       console.error('Error fetching posts:', error);
     } else {
-      cardInfo.value = data;
+      postData.value = data
     }
   } catch (error) {
     console.error('Error:', error);
@@ -122,6 +104,7 @@ async function createPost(form: any): Promise<void> {
     console.log(error, 'error')
   }finally{
     handleCloseModal()
+    await fetchPosts()
   }
 }
 onMounted(() => {

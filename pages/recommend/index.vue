@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 const client = useSupabaseClient()
-
+const rating: Ref<number> = ref(0)
 // async function uploadImage(image: any): Promise<void> {
 //   try {
 //     const { data, error } = await client
@@ -33,19 +33,31 @@ const client = useSupabaseClient()
 //     console.log(error, 'error')
 //   }
 // }
+const fetchRating = async (id: any) => {
+  try {
+    const { data, error } = await client
+      .from('rating')
+      .select('*')
+      .eq('postId',id)
+    if (error && error.details.includes('row')) {
+      console.log('No existing rating found, ready to send new rating.');
+    } else if (data) {
+      const sum = data.reduce((total, current) => total + current.rating, 0);
+      rating.value = sum / data.length;
+      console.log(rating.value);
+      
+    } else {
+      console.error('Error fetching rating:', error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
 function generateRandomFilename(extension: string): string {
   const randomString = Math.random().toString(36).substring(2, 15);
   return `${randomString}.${extension}`;
 }
-// async function getImage (): Promise<void> {
-//   const { data, error} = await client.storage
-//     .from('post')
-//     .list('public', {
-//       limit: 100,
-//       offset: 0,
-//       sortBy: {column: 'image', order:'asc'}
-//     })
-// }
+
 async function uploadImage(file: File,uid: string): Promise<string | null> {
   try {
     const extension = file.name.split('.').pop();
@@ -77,21 +89,67 @@ function openCreate (): void {
 function handleCloseModal() {
     postCreate.value = false;
   }
+// async function fetchPosts(): Promise<void> {
+//   try {
+//     const { data, error } = await client
+//     .from('post')
+//     .select(`
+//         id,
+//         title,
+//         (SELECT AVG(rating) FROM rating WHERE rating.postId = post.id) AS average_rating
+//       `)
+//     .order('average_rating', { ascending: false })
+//     .range(0, 4); // เลือกเพียง 5 โพสต์แรก
+//     if (error) {
+//       console.error('Error fetching posts:', error);
+//     } else {
+//       cardInfo.value = data;
+//       await fetchRating(cardInfo.value.id)
+//     }
+//   } catch (error) {
+//     console.error('Error:', error);
+//   }
+// }
 async function fetchPosts(): Promise<void> {
   try {
-    const { data, error } = await client.from('post').select('*');
-    if (error) {
-      console.error('Error fetching posts:', error);
-    } else {
-      cardInfo.value = data;
+    // ดึงข้อมูลโพสต์และคะแนนจากฐานข้อมูล
+    const { data: postsData, error: postsError } = await client
+      .from('post')
+      .select('*'); // เลือกเฉพาะคอลัมน์ที่ต้องการจากตาราง "post"
+    const { data: ratingsData, error: ratingsError } = await client
+      .from('rating')
+      .select('postId, rating'); // เลือกเฉพาะคอลัมน์ที่ต้องการจากตาราง "rating"
+
+    // ถ้ามีข้อผิดพลาดเกิดขึ้นในการดึงข้อมูล
+    if (postsError || ratingsError) {
+      console.error('Error fetching data:', postsError || ratingsError);
+      return;
     }
+
+    // คำนวณคะแนนเฉลี่ยของแต่ละโพสต์
+    const postAverageRatings = postsData.map(post => {
+      // กรองเฉพาะคะแนนที่เกี่ยวข้องกับโพสต์นี้
+      const postRatings = ratingsData.filter(rating => rating.postId === post.id);
+      // คำนวณคะแนนเฉลี่ย
+      const averageRating = postRatings.reduce((sum, rating) => sum + rating.rating, 0) / postRatings.length;
+      return { ...post, averageRating }; // เพิ่มค่าคะแนนเฉลี่ยเข้าไปในข้อมูลโพสต์
+    });
+
+    // เรียงลำดับโพสต์ตามคะแนนเฉลี่ย
+    const sortedPosts = postAverageRatings.sort((a, b) => b.averageRating - a.averageRating);
+    
+    // เลือกเพียง 5 อันดับแรก
+    const top5Posts = sortedPosts.slice(0, 5);
+    cardInfo.value = top5Posts
+    // แสดงผลลัพธ์
+    console.log('Top 5 posts:', top5Posts);
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error:', error.message);
   }
 }
 const cardInfo: Ref<any> = ref()
   
-async function createPost(form: any): Promise<void> {
+  async function createPost(form: any): Promise<void> {
   try {
     const imageUrls: string[] = [];
     for (const file of form.image) {
@@ -119,6 +177,7 @@ async function createPost(form: any): Promise<void> {
     console.log(error, 'error')
   }finally{
     handleCloseModal()
+    await fetchPosts()
   }
 }
 onMounted(() => {

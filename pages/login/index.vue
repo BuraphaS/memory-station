@@ -2,7 +2,7 @@
   <div class="container" style="padding: 50px 0 100px 0">
     <div class="container flex flex-col items-center gap-4 my-20 mt-8 sm:gap-8 md:gap-16">
       <div
-        v-for="(items, index) in [...cardInfo, ...cardInfo]"
+        v-for="(items, index) in cardInfo"
         :key="index">
         <Card :form="items"/>
       </div>
@@ -24,6 +24,7 @@ const client = useSupabaseClient()
 
 const modal:Ref<boolean> = ref(false)
 const cardInfo: Ref<any> = ref([])
+  
 async function fetchPosts(): Promise<void> {
   try {
     const { data, error } = await client.from('post').select('*');
@@ -38,16 +39,19 @@ async function fetchPosts(): Promise<void> {
 }
 function scrollDown (): void {
   const scrollPosition = Math.min(window.scrollY, 1000)
-  window.scrollTo({ top: scrollPosition })
+  // const scrollPosition = Math.min(window.scrollY, 1000)
+  // window.scrollTo({ top: scrollPosition })
   if (scrollPosition > 800) {
     modal.value = true
   }
 }
 onMounted((): void => {
   if (user) {
-    router.push('/')
+    router.replace('/')
+    // router.replace({ name: 'recommend'})
+  } else {
+    window.addEventListener('scroll', scrollDown)
   }
-  window.addEventListener('scroll', scrollDown)
   fetchPosts()
 })
 </script>

@@ -5,7 +5,7 @@
         id="default-tab" 
         data-tabs-toggle="#default-tab-content" 
         role="tablist"
-        class="hidden text-sm font-medium text-center text-gray-500 rounded-lg sm:flex bg-white dark:divide-gray-700 dark:text-gray-400">
+        class="hidden text-sm font-medium text-center text-gray-500 bg-white rounded-lg sm:flex dark:divide-gray-700 dark:text-gray-400">
           <li 
             class="w-full focus-within:z-10"
             role="presentation">
@@ -61,28 +61,30 @@
       class="w-[1000px] flex justify-center items-center">
       <div 
         v-if="activeTab === 'friends'" 
-        class="grid grid-cols-2 flex justify-center items-center rounded-lg bg-gray-50 dark:bg-gray-800" 
+        class="flex grid items-center justify-center grid-cols-2 rounded-lg bg-gray-50 dark:bg-gray-800" 
         id="friends" 
         role="tabpanel"
         aria-labelledby="profile-tab">
           <NuxtLink
-            v-for="(item, index) in [...friend, ...friend]"
+            v-for="(item, index) in friend"
             :key="index"
             :to="{
-              path: item?.id
-                ? `/friend/${item?.id}`
+              path: item?.uid
+                ? `/profile/${item?.uid}`
                 : '/'
             }"
             class="w-[450px] bg-white h-[100px] rounded-xl flex justify-between p-4 m-8 hover:bg-[#D9D9D9] cursor-pointer drop-shadow-md">
-            <div class="flex gap-4 items-center">
+            <div class="flex items-center gap-4">
               <img
-                :src="item.img"
+                :src="item.image"
                 alt=""
                 class="profile-img ">
-                <span class="text-lg">{{ item.name }}</span>
+                <span class="text-lg">{{ item.username }}</span>
             </div>
             <div class="flex items-center">
-              <button class="h-[40px] z-30 p-1 rounded shadow bg-error text-white text-sm ">
+              <button
+                class="h-[40px] z-30 p-1 rounded shadow bg-error text-white text-sm "
+                @click="deleteFriend(item.uid)">
                 Unfriend
               </button>
             </div>
@@ -90,14 +92,44 @@
         </div>
       <div v-if="activeTab === 'search'" class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="search" role="tabpanel" aria-labelledby="dashboard-tab">
           <!-- <p class="text-sm text-gray-500 dark:text-gray-400">This is some placeholder content for the LOVE tab.</p> -->
-          <form class="w-[500px] mx-auto">   
+          <form class="w-[500px] mx-auto" @submit.prevent="onSearch">   
               <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
               <div class="relative">
-                  <input type="search" id="default-search" class="block w-full p-4 ps-5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search" required />
-                  <button type="submit" class="text-white absolute end-2.5 bottom-2.5 bg-[#1E1E1E] hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-lg px-2 py-1 dark:bg-[#1E1E1E] dark:hover:bg-[#1E1E1E] dark:focus:ring-[#1E1E1E] mdi mdi-magnify">
+                  <input 
+                    type="search" 
+                    id="default-search" 
+                    v-model="search"
+                    class="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg ps-5 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                    placeholder="Search" 
+                    required />
+                  <button 
+                    type="submit" 
+                    class="text-white absolute end-2.5 bottom-2.5 bg-[#1E1E1E] hover:bg-blue-800 
+                    focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-lg px-2 
+                    py-1 dark:bg-[#1E1E1E] dark:hover:bg-[#1E1E1E] dark:focus:ring-[#1E1E1E] mdi mdi-magnify">
                   </button>
               </div>
           </form>
+          <div v-if="searchResults.length" class="grid grid-cols-2 gap-4 mt-4">
+            <NuxtLink
+              v-for="(userData, index) in searchResults"
+              :key="index"
+              :to="`/profile/${userData.uid}`"
+              class="w-[450px] bg-white h-[100px] rounded-xl flex justify-between p-4 m-8 hover:bg-[#D9D9D9] cursor-pointer drop-shadow-md">
+              <div class="flex items-center gap-4">
+                <img
+                  :src="userData.image"
+                  alt=""
+                  class="profile-img ">
+                <span class="text-lg">{{ userData.username }}</span>
+              </div>
+              <div class="flex items-center">
+                <!-- <button class="h-[40px] z-30 p-1 rounded shadow bg-primary text-white text-sm ">
+                  Add Friend
+                </button> -->
+              </div>
+            </NuxtLink>
+          </div>
       </div>
       <div
         v-if="activeTab === 'request'" 
@@ -106,67 +138,258 @@
             ? `/friend/${request?.id}`
             : '/'
         }"
-        class="grid grid-cols-2 flex justify-center items-center rounded-lg bg-gray-50 dark:bg-gray-800" 
+        class="flex grid items-center justify-center grid-cols-2 rounded-lg bg-gray-50 dark:bg-gray-800" 
         id="request" 
         role="tabpanel" 
         aria-labelledby="dashboard-tab">
         <NuxtLink
-            v-for="(item, index) in [...request, ...request]"
+            v-for="(item, index) in friendRequest"
             :key="index"
             :to="{
-              path: item?.id
-                ? `/friend/${item?.id}`
+              path: item?.uid
+                ? `/profile/${item?.uid}`
                 : '/'
             }"
             class="w-[450px] bg-white h-[100px] rounded-xl flex justify-between p-2 m-8 hover:bg-[#D9D9D9] cursor-pointer drop-shadow-md">
-            <div class="flex gap-4 items-center">
+            <div class="flex items-center gap-4">
               <img
-                :src="item.img"
+                :src="item.image"
                 alt=""
                 class="profile-img ">
-                <span class="text-lg">{{ item.name }}</span>
+                <span class="text-lg">{{ item.username }}</span>
             </div>
-            <div class="flex items-center">
-              <button class="h-[40px] p-1 rounded shadow bg-success text-white text-sm ">
+            <div class="z-10 flex items-center">
+              <button 
+                class="h-[40px] p-1 rounded shadow bg-success text-white text-sm "
+                @click="acceptFriend(item.uid)">
                 Accept Friend
               </button>
             </div>
-          </NuxtLink>
-        </div>
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { type Ref, ref } from 'vue'
+const supabase = useSupabaseClient()
+const user: any = useSupabaseUser()
 
 const activeTab: Ref<any> = ref('friends');
+// const route = useRoute()
+// const router = useRouter()
+const search = ref('')
+const users = ref()
+const searchResults = ref([])
+const friendRequest: Ref<any> = ref([])
+const friend: Ref<any> = ref([])
 
-const friend: Ref<any> = ref([
-  {
-    id: 1,
-    name: 'Thanaphoom',
-    img: 'https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg',
-  },
-  {
-    id: 2,
-    name: 'Ten Hag',
-    img: 'https://static.independent.co.uk/2024/05/04/09/006ae59f824aefd28c9dabb55811b8d0Y29udGVudHNlYXJjaGFwaSwxNzE0ODIzOTYx-2.75970411.jpg',
+// async function fetchProfileComment(info: any): Promise<void> {
+//   try {
+//     const userUids = info.map(c => c.uid)
+//     const friendUid = info.map(f => f.uid)
+//     if (userUids == user.value.id) {
+      
+//       const { data, error } = await supabase
+//         .from('user')
+//         .select('uid, username, image')
+//         .in('frienduid', userUids)
+  
+//       if (error) {
+//         console.error('Error fetching user data:', error)
+//       } else {
+//         const userMap = new Map(data.map(user => [user.uid, user]))
+//         info.forEach(c => {
+//           const user = userMap.get(c.uid)
+//           if (user) {
+//             c.username = user.username
+//             c.image = user.image
+//           }
+//         })
+//       }
+//     } else if (friendUid == user.value.id) {
+//       const { data, error } = await supabase
+//         .from('user')
+//         .select('uid, username, image')
+//         .in('uid', userUids)
+  
+//       if (error) {
+//         console.error('Error fetching user data:', error)
+//       } else {
+//         const userMap = new Map(data.map(user => [user.frienduid, user]))
+//         info.forEach(f => {
+//           const user = userMap.get(f.frienduid)
+//           if (user) {
+//             f.username = user.username
+//             f.image = user.image
+//           }
+//         })
+//       }
+//     }
+//   } catch (error) {
+//     console.error('Error:', error)
+//   }
+// }
+async function fetchProfileComment(info: any): Promise<void> {
+  try {
+    console.log(info);
+    
+    const userUids = info.map(c => c.uid).filter(uid => uid !== user.value.id)
+    const friendUids = info.map(f => f.frienduid).filter(frienduid => frienduid !== user.value.id)
+    
+    const { data: userData, error: userError } = await supabase
+      .from('user')
+      .select('uid, username, image')
+      .in('uid', userUids)
+
+    const { data: friendData, error: friendError } = await supabase
+      .from('user')
+      .select('uid, username, image')
+      .in('uid', friendUids)
+
+    if (userError) {
+      console.error('Error fetching user data:', userError)
+    }
+
+    if (friendError) {
+      console.error('Error fetching friend data:', friendError)
+    }
+
+    if (userData && friendData) {
+      const userMap = new Map(userData.map(user => [user.uid, user]))
+      const friendMap = new Map(friendData.map(user => [user.uid, user]))
+      
+      info.forEach(c => {
+        const user = userMap.get(c.uid)
+        if (user) {
+          c.username = user.username
+          c.image = user.image
+          c.uid = user.uid
+        }
+      })
+      
+      info.forEach(f => {
+        const user = friendMap.get(f.frienduid)
+        if (user) {
+          f.username = user.username
+          f.image = user.image
+          f.uid = user.uid
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Error:', error)
   }
-])
-const search: Ref<string> = ref('')
-const request: Ref<any> = ref([
-  {
-    id: 1,
-    name: 'Thanaphoom',
-    img: 'https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg',
-  },
-  {
-    id: 2,
-    name: 'Ten Hag',
-    img: 'https://static.independent.co.uk/2024/05/04/09/006ae59f824aefd28c9dabb55811b8d0Y29udGVudHNlYXJjaGFwaSwxNzE0ODIzOTYx-2.75970411.jpg',
+}
+async function fetchFriend (): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('friend')
+      .select(`*`)
+      .or(`frienduid.eq.${user.value.id},uid.eq.${user.value.id}`)
+      .eq('status', 'FRIEND')
+      // .select()
+    if (error) {
+      console.log(error); 
+    } else {
+      friend.value = data
+      await fetchProfileComment(friend.value)
+    }
+  } catch (error) {
+    console.log(error); 
   }
-])
+}
+async function fetchFriendRequest (): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('friend')
+      .select(`*`)
+      .eq('frienduid', user.value.id)
+      .eq('status', 'WAITING')
+      .select()
+    if (error) {
+      console.log(error); 
+    } else {
+      friendRequest.value = data
+      await fetchProfileComment(friendRequest.value)
+    }
+  } catch (error) {
+    console.log(error); 
+  }
+}
+async function fetchUser (uid: any): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('user')
+      .select(`*`)
+      .eq('uid', uid)
+      .single()
+    if (error) {
+      console.log(error); 
+    } else {
+      users.value = data
+    }
+  } catch (error) {
+    console.log(error)
+  }
+}
+async function onSearch (): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('user')
+      .select(`uid, username, image`)
+      .ilike('username', `%${search.value}%`)
+
+    if (error) {
+      console.log(error);
+    } else {
+      searchResults.value = data;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+async function acceptFriend(uid: any): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('friend')
+        .update({ 
+          status: 'FRIEND'
+         } as never)
+        .eq('uid', uid)
+        .eq('frienduid', user.value.id)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchFriendRequest()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+async function deleteFriend(uid: any): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('friend')
+        .delete()
+        .eq('uid', uid)
+        .eq('frienduid', user.value.id)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchFriend()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+onMounted(()=>{
+  fetchFriendRequest()
+  fetchFriend()
+})
 </script>
 
 <style scoped lang="scss">

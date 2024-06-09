@@ -16,9 +16,9 @@
             to="/"
             class="h-full">
             <img
-              src="/svg/maxx-ecu-logo.svg"
-              alt="maxx ecu logo appbar"
-              class="object-cover object-center h-full" />
+              src="/svg/logo_white.svg"
+              alt="logo appbar"
+              class="flex items-center object-contain object-center img" />
           </NuxtLink>
         </div>
         <div
@@ -128,7 +128,7 @@ const menus = ref([
   }
 ])
 const profile: Ref<any> = ref()
-async function fetchPost (): Promise<void> {
+async function fetchProfile (): Promise<void> {
   try {
     const { data, error } = await supabase
       .from('user')
@@ -169,7 +169,7 @@ async function signOut() {
   }
 }
 onMounted(() => {
-  fetchPost()
+  fetchProfile()
 })
 </script>
 
@@ -179,5 +179,10 @@ onMounted(() => {
   height: 60px;
   border-radius: 100%;
   object-fit: cover;
+}
+.img{
+  width: 150px;
+  height: 90px;
+  object-fit: contain;
 }
 </style>

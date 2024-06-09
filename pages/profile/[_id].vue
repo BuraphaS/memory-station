@@ -1,33 +1,51 @@
 <template>
-  <div class="flex flex-col justify-center items-center mx-auto w-full h-full bg-white p-8">
-    <div class="flex gap-28 items-center">
+  <div class="flex flex-col items-center justify-center w-full h-full p-8 mx-auto bg-white">
+    <div class="flex items-center gap-28">
       <img
-        :src="profile.img"
+        :src="!profile?.image ? '/svg/account-icon-account.svg' : profile?.image"
         alt="profile"
-        class="profile-img">
+        class="object-cover profile-img">
       <div class="flex flex-col w-full">
-        <span class="text-2xl">{{ profile.name }}</span>
-        <span>{{ profile.description }}</span>
+        <span class="text-2xl">{{ profile?.username }}</span>
+        <span>{{ profile?.description }}</span>
       </div>
-      <div>
+      <div v-if="profile?.uid !== user.id">
         <button
           type="button"
-          :class="switchButton(profile.status)">
-          {{ switchFriend(profile?.status) }}
+          :class="switchButton(status?.status)"
+          @click="toggleFriend">
+          {{ switchFriend(status?.status) }}
+        </button>
+      </div>
+      <div
+        v-if="profile?.uid === user.id"
+        class="flex justify-center w-full gap-4">
+        <button 
+          type="button"
+          class="shadow py-1 px-2 rounded w-[130px] h-full bg-[#D9D9D9] hover:bg-[#000000] hover:text-white"
+          @click="editProfile()">
+          Edit profile
+        </button>
+        <button 
+          type="button"
+          class="shadow py-1 px-2 rounded w-[130px] bg-[#F8A221] text-white hover:bg-[#F5BD2C] hover:text-white"
+          @click="changePassword()">
+          Change Password
         </button>
       </div>
     </div>
     <div class="flex gap-20 mt-8">
-      <div class="text-xl font-semibold">
-        {{ profile.post }}
+      <div
+        class="text-xl font-semibold">
+        {{ !postData ? '0' : postData.length }}
         <span class="text-lg font-normal"> Posts</span>
       </div>
       <div class="text-xl font-semibold">
-        {{ profile.love }}
+        {{ !profile?.love ? '0' : profile?.love }}
         <span class="text-lg font-normal"> Love</span>
       </div>
       <div class="text-xl font-semibold">
-        {{ profile.friend }}
+        {{ !profile?.friend ? '0' : profile?.firend }}
         <span class="text-lg font-normal"> Friends</span>
       </div>
     </div>
@@ -76,180 +94,325 @@
       <div v-if="activeTab === 'post'" class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="post" role="tabpanel" aria-labelledby="profile-tab">
           <div class="grid grid-cols-3 gap-4">
             <div
-              v-for="(item, index) in [...profile.postDetail, ...profile.postDetail]"
-              :key="index">
+              v-for="(item, index) in postData"
+              :key="index"
+              @click="openComment(item.id)">
               <img 
-                :src="item.img" 
+                :src="item.image[0]"
                 alt="item"
-                class="post-img cursor-pointer">
+                class="cursor-pointer post-img">
                 <div class="flex justify-between">
-                  <div class="mdi mdi-heart text-sm">
-                    50
+                  <div class="text-sm mdi mdi-heart">
+                    <span>{{ item.likes.length }}</span>
                   </div>
-                  <div class="flex">
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                  </div>
+                  <StarRating 
+                    :isAverage="true"
+                    :value="item.ratings" 
+                    :id="item.id"/>
                 </div>
             </div>
           </div>
       </div>
       <div v-if="activeTab === 'love'" class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="love" role="tabpanel" aria-labelledby="dashboard-tab">
           <div class="grid grid-cols-3 gap-4">
-            <div
+            <!-- <div
               v-for="(item, index) in [...profile.postDetail]"
               :key="index">
               <img 
                 :src="item.img" 
                 alt="item"
-                class="post-img cursor-pointer">
+                class="cursor-pointer post-img">
                 <div class="flex justify-between">
-                  <div class="mdi mdi-heart text-sm">
+                  <div class="text-sm mdi mdi-heart">
                     50
                   </div>
                   <div class="flex">
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
-                    <div class="mdi mdi-star text-sm"></div>
+                    <div class="text-sm mdi mdi-star"></div>
+                    <div class="text-sm mdi mdi-star"></div>
+                    <div class="text-sm mdi mdi-star"></div>
+                    <div class="text-sm mdi mdi-star"></div>
+                    <div class="text-sm mdi mdi-star"></div>
                   </div>
                 </div>
-            </div>
+            </div> -->
           </div>
       </div>
     </div>
+    <ModalComment
+      v-if="postComment"
+      :modal="postComment"
+      :id="postId"
+      @close-modal="handleCloseModal()"/>
   </div>
 </template>
 
 <script setup lang="ts">
 import { type Ref, ref } from 'vue'
 
-interface IUserProfile {
-  img: string;
-  name: string;
-  description: string;
-  post: number;
-  love: number;
-  friend: number;
-  status: string;
-  postDetail: {
-    img: string;
-    topic: string;
-    description: string;
-    comment: {
-      name: string;
-      profileImg: string;
-      comment: string;
-    }[];
-  }[];
+interface ILike {
+  uid: string
+  status: any
 }
-const profile: Ref<IUserProfile> = ref({
-  img: 'https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg',
-  name: 'Erik Ten Hag',
-  description: 'ชอบการท่องเที่ยวและอาหาร Thailand 22 years old.',
-  post: 12,
-  love: 100,
-  friend: 200,
-  status: 'DONT',
-  postDetail: [
-    {
-    img: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGljfGVufDB8fDB8fHww',
-    topic: 'Beautiful World Best Pic In The World Best, most beautiful places on earth HD ',
-    description: 'Beautiful World Best Pic In The World Best, most beautiful places on earth HD ',
-    comment: [
-      {
-        name: 'Ten Hagg',
-        profileImg: 'https://prod-media.beinsports.com/image/1708164001806_0d19ee95-bb70-443b-a046-c0e89bad34a7.jpg',
-        comment: 'น่าไปจังเลยย'
-      },
-      {
-        name: 'Thanaphoom',
-        profileImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMhiWAP58ytURnSopgXAcRpt-N0oYExestuwvGz0JLPw&s',
-        comment: 'รถไฟร้อนมากแดดไทยแลนด์'
-      },
-      {
-        name: 'Arnon',
-        profileImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREsWVddCQZ7TjwYJZf6BrIomSI0Hs9WxxziJKytg7-MQ&s',
-        comment: 'อยากเล่นบาส'
-      }
-    ]
-  },
-  {
-    img: 'https://e1.pxfuel.com/desktop-wallpaper/664/468/desktop-wallpaper-beautiful-world-best-pic-in-the-world-best-most-beautiful-places-on-earth.jpg',
-    topic: 'Beautiful World Best Pic In The World Best, most beautiful places on earth HD ',
-    description: 'Beautiful World Best Pic In The World Best, most beautiful places on earth HD ',
-    comment: [
-      {
-        name: 'Ten Hagg',
-        profileImg: 'https://prod-media.beinsports.com/image/1708164001806_0d19ee95-bb70-443b-a046-c0e89bad34a7.jpg',
-        comment: 'น่าไปจังเลยย'
-      },
-      {
-        name: 'Thanaphoom',
-        profileImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMhiWAP58ytURnSopgXAcRpt-N0oYExestuwvGz0JLPw&s',
-        comment: 'รถไฟร้อนมากแดดไทยแลนด์'
-      },
-      {
-        name: 'Arnon',
-        profileImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREsWVddCQZ7TjwYJZf6BrIomSI0Hs9WxxziJKytg7-MQ&s',
-        comment: 'อยากเล่นบาส'
-      }
-    ]
-  },
-  {
-    img: 'https://e1.pxfuel.com/desktop-wallpaper/664/468/desktop-wallpaper-beautiful-world-best-pic-in-the-world-best-most-beautiful-places-on-earth.jpg',
-    topic: 'Beautiful World Best Pic In The World Best, most beautiful places on earth HD ',
-    description: 'Beautiful World Best Pic In The World Best, most beautiful places on earth HD ',
-    comment: [
-      {
-        name: 'Ten Hagg',
-        profileImg: 'https://prod-media.beinsports.com/image/1708164001806_0d19ee95-bb70-443b-a046-c0e89bad34a7.jpg',
-        comment: 'น่าไปจังเลยย'
-      },
-      {
-        name: 'Thanaphoom',
-        profileImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMhiWAP58ytURnSopgXAcRpt-N0oYExestuwvGz0JLPw&s',
-        comment: 'รถไฟร้อนมากแดดไทยแลนด์'
-      },
-      {
-        name: 'Arnon',
-        profileImg: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREsWVddCQZ7TjwYJZf6BrIomSI0Hs9WxxziJKytg7-MQ&s',
-        comment: 'อยากเล่นบาส'
-      }
-    ]
-  }
-]
-})
+const supabase = useSupabaseClient()
+const user: Ref<any> = useSupabaseUser()
+const router = useRouter()
+const route = useRoute()
+  
+const loading = ref(true)
+const profile: Ref<any> = ref()
+const postData: Ref<any> = ref([])
 const activeTab = ref('post');
+const images = ref<string[]>([])
+const postComment: Ref<boolean> = ref(false)
+const postId: Ref<any> = ref()
+const like: Ref<ILike[]> = ref([])
+const status: Ref<any> = ref()
+const friend: Ref<any> = ref()
+const rating: Ref<number> = ref(0)
 
+async function fetchProfile (): Promise<void> {
+  try {
+    const { data,error } = await supabase
+      .from('user')
+      .select(`*`)
+      .eq('uid', route.params._id)
+      .single()
+    if (error) {
+      console.log(error); 
+    } else {
+      profile.value = data
+    }
+  } catch (error) {
+    console.log(error); 
+  }
+}
+async function fetchPost (): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('post')
+      .select(`*`)
+      .eq('uid', route.params._id)
+    if (error) {
+      console.log(error); 
+    } else {
+      postData.value = data;
+      for (const post of postData.value) {
+        const likes = await fetchLike(post.id);
+        const ratings = await fetchRating(post.id);
+        post.likes = likes;
+        post.ratings = ratings;
+      }
+    }
+  } catch (error) {
+    console.log(error); 
+  }
+}
+
+const fetchRating = async (id: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('rating')
+      .select('*')
+      .eq('postId', id)
+    if (error && error.details.includes('row')) {
+      console.log('No existing rating found, ready to send new rating.');
+    } else if (data) {
+      const sum = data.reduce((total, current) => total + current.rating, 0);
+      rating.value = sum / data.length;
+      return rating.value;
+    } else {
+      console.error('Error fetching rating:', error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+async function fetchLike(id: any): Promise<any> {
+  try {
+    const { data, error } = await supabase
+        .from('like')
+        .select('*')
+        .eq('postId', id)
+    if (error) {
+        console.error(`Error fetching user data for UID :`, error);
+      } else {
+        return data;
+      }
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+  }
+}
+function openComment (id: any): void {
+  postId.value = id
+  postComment.value = true
+}
+function handleCloseModal() {
+  postComment.value = false;
+  postId.value = null;
+}
+function editProfile (): void {
+  router.push({ path: `/setting/${user.value.id}` })
+}
+function changePassword (): void {
+  router.push({ path: `/setting/change-password/${user.value.id}` })
+}
+// async function fetchLike(): Promise<void> {
+//   try {
+//     const { data, error } = await supabase
+//         .from('like')
+//         .select('status, uid')
+//         .eq('postId', postData.value.id)
+//     if (error) {
+//         console.error(`Error fetching user data for UID :`, error);
+//       } else {
+//         like.value = data
+//       }
+//   } catch (error) {
+//     console.error('Error:', error);
+//   } finally {
+//     loading.value = false;
+//   }
+// }
+async function fetchFriend(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+        .from('friend')
+        .select('*')
+        // .eq('frienduid', route.params._id)
+        // .eq('uid', user.value.id)
+        // .single()
+    if (error) {
+        console.error(`Error fetching user data for UID ${status}:`, error);
+        return
+      } else {
+        friend.value = data
+        await fetchFilterFriend()
+      }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+async function fetchFilterFriend(): Promise<void> {
+  try {
+    const { data: friendRequest, error: requestError } = await supabase
+      .from('friend')
+      .select('*')
+      .or(`uid.eq.${route.params._id},frienduid.eq.${route.params._id}`)
+      .single()
+    if (requestError) {
+      console.error('Error fetching friend request:', requestError)
+      return
+    } else if (friendRequest) {
+      if (friendRequest.uid === user.value.id && friendRequest.frienduid === route.params._id) {
+        // Current user sent a friend request
+        status.value = friendRequest
+      } else if (friendRequest.uid === route.params._id && friendRequest.frienduid === user.value.id) {
+        // Current user received a friend request
+        status.value = friendRequest
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+async function sendFriend(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('friend')
+        .insert({ 
+          status: 'WAITING',
+          uid: user.value.id,
+          frienduid: route.params._id
+         } as never)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchFriend()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+async function acceptFriend(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('friend')
+        .update({ 
+          status: 'FRIEND'
+         } as never)
+        .eq('id', status.value.id)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchFriend()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+async function deleteFriend(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('friend')
+        .delete()
+        .eq('uid', user.value.id)
+        .select()
+      if (error) {
+        console.error('Error updating post comments:', error)
+      } else {
+        await fetchFriend()
+      }
+    } catch (error) {
+      console.error('Error saving new comment:', error)
+    }
+}
+const toggleFriend = async (): Promise<void> => {
+  if (!status.value) {
+    await sendFriend()
+  } else if (status.value.status === 'WAITING' && profile?.value.uid !== user.value.id) {
+    await deleteFriend()
+  } else if (status.value.status === 'WAITING' && profile?.value.uid === user.value.id) {
+    await acceptFriend()
+  } else {
+    await sendFriend()
+  }
+}
 function switchFriend (value: string): any {
   switch (value) {
     case 'FRIEND':
       return 'Unfriend'
-    case 'REQUEST':
-      return 'Accept Friend'
-    case 'DONT':
-      return 'Add Friend'
+    case 'WAITING':
+      return profile?.value.uid !== user.value.id && status.value.frienduid !== user.value.id ? 'Send Request' : 'Accept Friend'
     default:
-      return '-'
+      return 'Add Friend'
   }
 }
 function switchButton (value: string): any {
   switch (value) {
     case 'FRIEND':
       return 'shadow py-1 px-2 rounded w-[150px] bg-error text-white hover:bg-[#000000] hover:text-white'
-    case 'REQUEST':
-      return 'shadow py-1 px-2 rounded w-[150px] bg-success text-white hover:bg-[#000000] hover:text-white'
-    case 'DONT':
-      return 'shadow py-1 px-2 rounded w-[150px] bg-primary text-white hover:bg-[#000000] hover:text-white'
+    case 'WAITING':
+      return profile?.value.uid !== user.value.id && status.value.frienduid !== user.value.id ? 'shadow py-1 px-2 rounded w-[150px] bg-[#FFA500] text-white hover:bg-error hover:text-white' : 'shadow py-1 px-2 rounded w-[150px] bg-success text-white hover:bg-[#000000] hover:text-white'
     default:
-      return '-'
+      return 'shadow py-1 px-2 rounded w-[150px] bg-primary text-white hover:bg-[#FFA500] hover:text-white'
   }
 }
+onMounted(() => {
+  if (postData.value.image) {
+    try {
+      images.value = JSON.parse(postData.value.image);
+    } catch (error) {
+      console.log('Error parsing image JSON:', error);
+    }
+  }
+  fetchPost()
+  fetchProfile()
+  fetchFriend()
+  // fetchLike()
+})
 </script>
 
 <style scoped lang="scss">

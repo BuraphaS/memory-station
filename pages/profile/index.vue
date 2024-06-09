@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center justify-center w-full h-full p-8 mx-auto bg-white">
+  <div class="flex flex-col items-center justify-center w-full h-full p-4 mx-auto bg-white md:p-8">
     <div class="flex grid items-center grid-cols-3">
       <div class="flex items-center justify-center">
         <img
@@ -8,25 +8,25 @@
           class="object-cover profile-img">
       </div>
       <div class="flex flex-col w-full">
-        <span class="text-2xl">{{ profile?.username }}</span>
-        <span>{{ profile?.description }}</span>
+        <span class="md:text-2xl">{{ profile?.username }}</span>
+        <span class="text-sm">{{ profile?.description }}</span>
       </div>
-      <div class="flex justify-center w-full gap-4">
+      <div class="items-center justify-center w-full gap-4 m-auto md:flex">
         <button 
           type="button"
-          class="shadow py-1 px-2 rounded w-[130px] h-full bg-[#D9D9D9] hover:bg-[#000000] hover:text-white"
+          class="shadow justify-center flex m-auto py-1 px-2 rounded md:w-[130px] h-full text-sm bg-[#D9D9D9] hover:bg-[#000000] hover:text-white"
           @click="editProfile()">
           Edit profile
         </button>
         <button 
           type="button"
-          class="shadow py-1 px-2 rounded w-[130px] bg-[#F8A221] text-white hover:bg-[#F5BD2C] hover:text-white"
+          class="shadow py-1 px-2 rounded flex m-auto md:w-[130px] w-[90px] bg-[#F8A221] text-sm text-white hover:bg-[#F5BD2C] hover:text-white"
           @click="changePassword()">
           Change Password
         </button>
       </div>
     </div>
-    <div class="flex gap-20 mt-8">
+    <div class="flex gap-12 mt-8 md:gap-20">
       <div
         class="text-xl font-semibold">
         {{ !postData ? '0' : postData.length }}
@@ -42,12 +42,12 @@
       </div>
     </div>
     <div 
-      :class="activeTab == 'post' ? 'w-[800px] border-y-2 rounded-l-lg mt-12' : 'w-[800px] border-y-2 rounded-r-lg mt-12'">
+      :class="activeTab == 'post' ? 'w-full md:w-[700px] border-y-2 rounded-l-lg mt-12' : 'w-full md:w-[700px] border-y-2 rounded-r-lg mt-12'">
       <ul 
         id="default-tab" 
         data-tabs-toggle="#default-tab-content" 
         role="tablist"
-        class="hidden text-sm font-medium text-center text-gray-500 rounded-lg sm:flex dark:divide-gray-700 dark:text-gray-400">
+        class="flex text-sm font-medium text-center text-gray-500 rounded-lg dark:divide-gray-700 dark:text-gray-400">
           <li 
             class="w-full focus-within:z-10"
             role="presentation">
@@ -95,15 +95,12 @@
                 class="cursor-pointer post-img">
                 <div class="flex justify-between">
                   <div class="text-sm mdi mdi-heart">
-                    50
+                    <span>{{ item.likes.length }}</span>
                   </div>
-                  <div class="flex">
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                  </div>
+                  <StarRating 
+                    :isAverage="true"
+                    :value="item.ratings" 
+                    :id="item.id"/>
                 </div>
             </div>
           </div>
@@ -145,11 +142,17 @@
 import { type Ref, ref } from 'vue'
 import { useRouter } from 'nuxt/app';
 
+const router = useRouter()
 const supabase = useSupabaseClient()
 const user: Ref<any> = useSupabaseUser()
   
 const profile: Ref<any> = ref()
 const postData: Ref<any> = ref([])
+const activeTab = ref('post');
+const postComment: Ref<boolean> = ref(false)
+const postId: Ref<any> = ref()
+const images = ref<string[]>([])
+const rating: Ref<number> = ref(0)
 
 async function fetchProfile (): Promise<void> {
   try {
@@ -176,36 +179,69 @@ async function fetchPost (): Promise<void> {
     if (error) {
       console.log(error); 
     } else {
-      postData.value = data
+      postData.value = data;
+      for (const post of postData.value) {
+        const likes = await fetchLike(post.id);
+        const ratings = await fetchRating(post.id);
+        post.likes = likes;
+        post.ratings = ratings;
+      }
     }
   } catch (error) {
     console.log(error); 
   }
 }
 
-const router = useRouter()
-const activeTab = ref('post');
-
+const fetchRating = async (id: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('rating')
+      .select('*')
+      .eq('postId', id)
+    if (error && error.details.includes('row')) {
+      console.log('No existing rating found, ready to send new rating.');
+    } else if (data) {
+      const sum = data.reduce((total, current) => total + current.rating, 0);
+      rating.value = sum / data.length;
+      return rating.value;
+    } else {
+      console.error('Error fetching rating:', error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+async function fetchLike(id: any): Promise<any> {
+  try {
+    const { data, error } = await supabase
+        .from('like')
+        .select('*')
+        .eq('postId', id)
+    if (error) {
+        console.error(`Error fetching user data for UID :`, error);
+      } else {
+        return data;
+      }
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+  }
+}
 function editProfile (): void {
   router.push({ path: `/setting/${user.value.id}` })
 }
 function changePassword (): void {
   router.push({ path: `/setting/change-password/${user.value.id}` })
 }
-const postComment: Ref<boolean> = ref(false)
-const postId: Ref<any> = ref()
 
 function openComment (id: any): void {
   postId.value = id
   postComment.value = true
-  console.log(id);
-  
 }
 function handleCloseModal() {
   postComment.value = false;
   postId.value = null;
 }
-const images = ref<string[]>([]);
 onMounted(() => {
   if (postData.value.image) {
     try {
@@ -229,5 +265,17 @@ onMounted(() => {
   width: 250px;
   height: 250px;
   object-fit: cover;
+}
+@media only screen and (max-width: 600px) {
+  .profile-img{
+    width: 80px;
+    height: 80px;
+    border-radius: 100%;
+  }
+  .post-img{
+    width: 250px;
+    height: 120px;
+    object-fit: cover;
+  }
 }
 </style>

@@ -24,7 +24,7 @@ const search = ref('')
 
 function onSearch (): void {
   router.replace({
-    name: 'products',
+    name: 'friend',
     query: {
       ...route.query,
       search: search.value

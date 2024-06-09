@@ -62,6 +62,7 @@
                 <InputTextField
                   :value="profile.email"
                   label="Email"
+                  disabled
                   border
                   @input="onInputChange('email', $event.target.value)" 
                   />
@@ -209,7 +210,8 @@ async function updateProfile() {
       .select()
     console.log(user.value);
     if (error) throw error
-    await updateEmail()
+    // await updateEmail()
+    await fetchProfile()
   } catch (error: any) {
     alert(error.message)
   } finally {
@@ -219,6 +221,8 @@ async function updateProfile() {
 }
 function onInputChange(field: string, value: string) {
   profile.value[field] = value;
+  console.log(field = value);
+  
 }
 onMounted(() => {
   fetchProfile()

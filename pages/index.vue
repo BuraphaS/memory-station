@@ -2,8 +2,8 @@
   <section id="home-page">
     <div class="container flex flex-col items-center gap-4 my-20 mt-8 sm:gap-8 md:gap-16">
       <div
-        v-for="(items, index) in postData"
-        :key="index">
+        v-for="(items) in postData.slice().reverse()"
+        :key="items.id">
         <Card :form="items"/>
       </div>
     </div>
@@ -101,6 +101,7 @@ async function createPost(form: any): Promise<void> {
     console.log(error, 'error')
   }finally{
     handleCloseModal()
+    await fetchPosts()
   }
 }
 onMounted(() => {

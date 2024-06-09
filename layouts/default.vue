@@ -58,4 +58,10 @@ onMounted(() => {
   margin-top: 5rem;
   background-color: #EAEAEA;
 }
+
+@media only screen and (max-width: 600px) {
+  #site-content {
+    width: 100dvw;
+  }
+}
 </style>
