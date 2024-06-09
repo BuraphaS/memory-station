@@ -132,12 +132,7 @@
           </div>
       </div>
       <div
-        v-if="activeTab === 'request'" 
-        :to="{
-          path: request?.id
-            ? `/friend/${request?.id}`
-            : '/'
-        }"
+        v-if="activeTab === 'request'"
         class="flex grid items-center justify-center grid-cols-2 rounded-lg bg-gray-50 dark:bg-gray-800" 
         id="request" 
         role="tabpanel" 
@@ -177,66 +172,18 @@ const supabase = useSupabaseClient()
 const user: any = useSupabaseUser()
 
 const activeTab: Ref<any> = ref('friends');
-// const route = useRoute()
-// const router = useRouter()
 const search = ref('')
 const users = ref()
-const searchResults = ref([])
+const searchResults: Ref<any> = ref([])
 const friendRequest: Ref<any> = ref([])
 const friend: Ref<any> = ref([])
 
-// async function fetchProfileComment(info: any): Promise<void> {
-//   try {
-//     const userUids = info.map(c => c.uid)
-//     const friendUid = info.map(f => f.uid)
-//     if (userUids == user.value.id) {
-      
-//       const { data, error } = await supabase
-//         .from('user')
-//         .select('uid, username, image')
-//         .in('frienduid', userUids)
-  
-//       if (error) {
-//         console.error('Error fetching user data:', error)
-//       } else {
-//         const userMap = new Map(data.map(user => [user.uid, user]))
-//         info.forEach(c => {
-//           const user = userMap.get(c.uid)
-//           if (user) {
-//             c.username = user.username
-//             c.image = user.image
-//           }
-//         })
-//       }
-//     } else if (friendUid == user.value.id) {
-//       const { data, error } = await supabase
-//         .from('user')
-//         .select('uid, username, image')
-//         .in('uid', userUids)
-  
-//       if (error) {
-//         console.error('Error fetching user data:', error)
-//       } else {
-//         const userMap = new Map(data.map(user => [user.frienduid, user]))
-//         info.forEach(f => {
-//           const user = userMap.get(f.frienduid)
-//           if (user) {
-//             f.username = user.username
-//             f.image = user.image
-//           }
-//         })
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Error:', error)
-//   }
-// }
 async function fetchProfileComment(info: any): Promise<void> {
   try {
     console.log(info);
     
-    const userUids = info.map(c => c.uid).filter(uid => uid !== user.value.id)
-    const friendUids = info.map(f => f.frienduid).filter(frienduid => frienduid !== user.value.id)
+    const userUids = info.map((c: { uid: any; }) => c.uid).filter((uid: any) => uid !== user.value.id)
+    const friendUids = info.map((f: { frienduid: any; }) => f.frienduid).filter((frienduid: any) => frienduid !== user.value.id)
     
     const { data: userData, error: userError } = await supabase
       .from('user')
@@ -260,8 +207,8 @@ async function fetchProfileComment(info: any): Promise<void> {
       const userMap = new Map(userData.map(user => [user.uid, user]))
       const friendMap = new Map(friendData.map(user => [user.uid, user]))
       
-      info.forEach(c => {
-        const user = userMap.get(c.uid)
+      info.forEach((c: { uid: any; username: any; image: any; }) => {
+        const user = userMap.get(c.uid as never)
         if (user) {
           c.username = user.username
           c.image = user.image
@@ -269,8 +216,8 @@ async function fetchProfileComment(info: any): Promise<void> {
         }
       })
       
-      info.forEach(f => {
-        const user = friendMap.get(f.frienduid)
+      info.forEach((f: { frienduid: any; username: any; image: any; uid: any; }) => {
+        const user = friendMap.get(f.frienduid as never)
         if (user) {
           f.username = user.username
           f.image = user.image

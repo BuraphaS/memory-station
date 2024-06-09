@@ -201,7 +201,7 @@ const fetchRating = async (id: any) => {
     if (error && error.details.includes('row')) {
       console.log('No existing rating found, ready to send new rating.');
     } else if (data) {
-      const sum = data.reduce((total, current) => total + current.rating, 0);
+      const sum = data.reduce((total, current: any) => total + current.rating, 0);
       rating.value = sum / data.length;
       return rating.value;
     } else {

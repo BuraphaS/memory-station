@@ -143,7 +143,7 @@ const images: Ref<any> = ref(props.form.image)
 const loading = ref(true)
 const newComment: Ref<any> = ref('')
 const like: Ref<ILike[]> = ref([])
-const rating: Ref<number> = ref(0)
+const rating: Ref<any> = ref(0)
 const isDropdownOpen = ref(null)
 const editComment = ref(null)
   
@@ -210,7 +210,7 @@ async function fetchProfileComment(comments: IComment[]): Promise<void> {
     } else {
       const userMap = new Map(data.map(user => [user.uid, user]))
       comments.forEach(c => {
-        const user = userMap.get(c.uid)
+        const user = userMap.get(c.uid as never)
         if (user) {
           c.username = user.username
           c.image = user.image
@@ -368,7 +368,7 @@ const fetchRating = async () => {
     if (error && error.details.includes('row')) {
       console.log('No existing rating found, ready to send new rating.');
     } else if (data) {
-      const sum = data.reduce((total, current) => total + current.rating, 0);
+      const sum = data.reduce((total, current: any) => total + current.rating, 0);
       rating.value = sum / data.length;
     } else {
       console.error('Error fetching rating:', error);

@@ -170,7 +170,7 @@ interface ILike {
   uid: string
   status: any
 }
-const postData: Ref<IForm> = ref()
+const postData: Ref<any> = ref()
 const newComment: Ref<any> = ref('')
 const profile: Ref<any> = ref()
 const props = defineProps<IProps>()
@@ -263,7 +263,7 @@ async function fetchProfileComment(comments: IComment[]): Promise<void> {
     } else {
       const userMap = new Map(data.map(user => [user.uid, user]))
       comments.forEach(c => {
-        const user = userMap.get(c.uid)
+        const user = userMap.get(c.uid as never)
         if (user) {
           c.username = user.username
           c.image = user.image

@@ -41,7 +41,7 @@ interface IProps {
 }
 const props = defineProps<IProps>()
 const rating = ref(0)
-const user = useSupabaseUser();
+const user: Ref<any> = useSupabaseUser();
 const supabase = useSupabaseClient();
 const emit = defineEmits(['rating']);
 
@@ -114,7 +114,7 @@ const modifyRating = async (event: any) => {
       .from('rating')
       .update({
         rating: event,
-      })
+      } as never)
       .eq('uid', user.value.id)
       .eq('postId', props.id);
     if (error) {

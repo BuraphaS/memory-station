@@ -217,7 +217,7 @@ const fetchRating = async (id: any) => {
     if (error && error.details.includes('row')) {
       console.log('No existing rating found, ready to send new rating.');
     } else if (data) {
-      const sum = data.reduce((total, current) => total + current.rating, 0);
+      const sum = data.reduce((total, current: any) => total + current.rating, 0);
       rating.value = sum / data.length;
       return rating.value;
     } else {
@@ -299,7 +299,7 @@ async function fetchFilterFriend(): Promise<void> {
       .from('friend')
       .select('*')
       .or(`uid.eq.${route.params._id},frienduid.eq.${route.params._id}`)
-      .single()
+      .single<{ uid: string; frienduid: string }>()
     if (requestError) {
       console.error('Error fetching friend request:', requestError)
       return

@@ -42,7 +42,7 @@ const fetchRating = async (id: any) => {
     if (error && error.details.includes('row')) {
       console.log('No existing rating found, ready to send new rating.');
     } else if (data) {
-      const sum = data.reduce((total, current) => total + current.rating, 0);
+      const sum = data.reduce((total, current: any) => total + current.rating, 0);
       rating.value = sum / data.length;
       console.log(rating.value);
       
@@ -127,12 +127,12 @@ async function fetchPosts(): Promise<void> {
     }
 
     // คำนวณคะแนนเฉลี่ยของแต่ละโพสต์
-    const postAverageRatings = postsData.map(post => {
+    const postAverageRatings = postsData.map((post: {id: any}) => {
       // กรองเฉพาะคะแนนที่เกี่ยวข้องกับโพสต์นี้
       const postRatings = ratingsData.filter(rating => rating.postId === post.id);
       // คำนวณคะแนนเฉลี่ย
       const averageRating = postRatings.reduce((sum, rating) => sum + rating.rating, 0) / postRatings.length;
-      return { ...post, averageRating }; // เพิ่มค่าคะแนนเฉลี่ยเข้าไปในข้อมูลโพสต์
+      return { ...(post as object), averageRating }; // เพิ่มค่าคะแนนเฉลี่ยเข้าไปในข้อมูลโพสต์
     });
 
     // เรียงลำดับโพสต์ตามคะแนนเฉลี่ย
@@ -143,7 +143,7 @@ async function fetchPosts(): Promise<void> {
     cardInfo.value = top5Posts
     // แสดงผลลัพธ์
     console.log('Top 5 posts:', top5Posts);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error:', error.message);
   }
 }

@@ -102,7 +102,7 @@ const confirm = async () => {
     } else {
       console.error('No authenticated user')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating password:', error)
     message.value = error.message
   }
