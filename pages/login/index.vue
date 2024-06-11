@@ -48,9 +48,8 @@ function scrollDown (): void {
 onMounted((): void => {
   if (user) {
     router.replace('/')
-  } else {
-    window.addEventListener('scroll', scrollDown)
   }
+  window.addEventListener('scroll', scrollDown)
   fetchPosts()
 })
 </script>
