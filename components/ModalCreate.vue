@@ -131,8 +131,8 @@
 // import { defineProps, defineEmits } from 'vue'
 
 interface IProps {
-  modal: boolean
-  form: any
+  modal?: boolean
+  form?: any
 }
 interface IForm {
   uid: string

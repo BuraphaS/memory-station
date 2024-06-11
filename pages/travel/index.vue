@@ -157,7 +157,7 @@ async function fetchPostFriend(info: any): Promise<void> {
       console.error('Error fetching friend data:', friendError)
     }
     if (userData || friendData) {
-      const combinedData = [...(userData || []), ...(friendData || [])]
+      const combinedData: any[] = [...(userData || []), ...(friendData || [])]
       const uniquePosts = Array.from(new Map(combinedData.map(post => [post.id, post])).values())
       
       postData.value = [...postData.value, ...uniquePosts]
