@@ -13,14 +13,19 @@
       <div class="text-2xl duration-200 mdi mdi-plus text-primary group-active:-translate-y-2" />
     </button>
     <ModalCreate
-      :modal="postCreate"
-      @post="createPost"
-      @close-modal="handleCloseModal()"/>
+    :modal="postCreate"
+    @post="createPost"
+    @close-modal="handleCloseModal()"/>
   </section>
 </template>
 
 <script setup lang="ts">
 const client = useSupabaseClient()
+const user: any = useSupabaseUser()
+const postCreate: Ref<boolean> = ref(false)
+const postData: Ref<any> = ref([])
+const cardInfo: Ref<any> = ref()
+const friend: Ref<any> = ref([])
 
 function generateRandomFilename(extension: string): string {
   const randomString = Math.random().toString(36).substring(2, 15);
@@ -49,22 +54,21 @@ async function uploadImage(file: File,uid: string): Promise<string | null> {
     return null;
   }
 }
-
-const postCreate: Ref<boolean> = ref(false)
-const postData: Ref<any> = ref([])
   
 function openCreate (): void {
-    postCreate.value = true
-  }
+  postCreate.value = true
+}
 function handleCloseModal() {
-    postCreate.value = false;
-  }
+  postCreate.value = false;
+}
+  
 async function fetchPosts(): Promise<void> {
   try {
     const { data, error } = await client
     .from('post')
     .select('*')
     .eq('type', 'Travel')
+    .eq('status', 'Public')
     if (error) {
       console.error('Error fetching posts:', error);
     } else {
@@ -74,7 +78,23 @@ async function fetchPosts(): Promise<void> {
     console.error('Error:', error);
   }
 }
-const cardInfo: Ref<any> = ref()
+async function fetchPostsOwn(): Promise<void> {
+  try {
+    const { data, error } = await client
+    .from('post')
+    .select('*')
+    .eq('status', 'Just Friend')
+    .eq('type', 'Travel')
+    .eq('uid', user.value.id)
+    if (error) {
+      console.error('Error fetching posts:', error);
+    } else {
+      postData.value = [...postData.value, ...data]
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
   
 async function createPost(form: any): Promise<void> {
   try {
@@ -92,6 +112,7 @@ async function createPost(form: any): Promise<void> {
       type: form.type,
       rating: form.rating,
       like: form.like,
+      status: form.status,
       image: imageUrls
     } as never).select()
     if (error) {
@@ -107,8 +128,65 @@ async function createPost(form: any): Promise<void> {
     await fetchPosts()
   }
 }
+async function fetchPostFriend(info: any): Promise<void> {
+  try {
+    console.log(info);
+    
+    const userUids = info.map((c: { uid: any; }) => c.uid).filter((uid: any) => uid !== user.value.id)
+    const friendUids = info.map((f: { frienduid: any; }) => f.frienduid).filter((frienduid: any) => frienduid !== user.value.id)
+    
+    const { data: userData, error: userError } = await client
+      .from('post')
+      .select('*')
+      .eq('status', 'Just Friend')
+      .eq('type', 'Travel')
+      .in('uid', userUids)
+
+    const { data: friendData, error: friendError } = await client
+      .from('post')
+      .select('*')
+      .eq('status', 'Just Friend')
+      .eq('type', 'Travel')
+      .in('uid', friendUids)
+
+    if (userError) {
+      console.error('Error fetching user data:', userError)
+    }
+
+    if (friendError) {
+      console.error('Error fetching friend data:', friendError)
+    }
+    if (userData || friendData) {
+      const combinedData = [...(userData || []), ...(friendData || [])]
+      const uniquePosts = Array.from(new Map(combinedData.map(post => [post.id, post])).values())
+      
+      postData.value = [...postData.value, ...uniquePosts]
+    }
+  } catch (error) {
+    console.error('Error:', error)
+  }
+}
+async function fetchFriend (): Promise<void> {
+  try {
+    const { data, error } = await client
+      .from('friend')
+      .select(`*`)
+      .or(`frienduid.eq.${user.value.id},uid.eq.${user.value.id}`)
+      .eq('status', 'FRIEND')
+    if (error) {
+      console.log(error); 
+    } else {
+      friend.value = data
+      await fetchPostFriend(friend.value)
+    }
+  } catch (error) {
+    console.log(error); 
+  }
+}
 onMounted(() => {
   fetchPosts()
+  fetchFriend()
+  fetchPostsOwn()
 })
 </script>
 

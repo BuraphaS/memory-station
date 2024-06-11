@@ -24,7 +24,7 @@
               </p>
             </span>
           </div>
-          <StarRating 
+          <StarRating
             :id="props.form.id"/>
         </div>
         <div class="flex flex-col pb-4 border-b">
