@@ -13,9 +13,9 @@
       <div class="text-2xl duration-200 mdi mdi-plus text-primary group-active:-translate-y-2" />
     </button>
     <ModalCreate
-    :modal="postCreate"
-    @post="createPost"
-    @close-modal="handleCloseModal()"/>
+      :modal="postCreate"
+      @post="createPost"
+      @close-modal="handleCloseModal()"/>
   </section>
 </template>
 
@@ -157,8 +157,8 @@ async function fetchPostFriend(info: any): Promise<void> {
       console.error('Error fetching friend data:', friendError)
     }
     if (userData || friendData) {
-      const combinedData = [...(userData || []), ...(friendData || [])]
-      const uniquePosts = Array.from(new Map(combinedData.map(post => [post.id, post])).values())
+      const combinedData: any[] = [...(userData || []), ...(friendData || [])]
+      const uniquePosts = Array.from(new Map(combinedData.map(post => [post.id as never, post])).values())
       
       postData.value = [...postData.value, ...uniquePosts]
     }

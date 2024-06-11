@@ -35,9 +35,9 @@
 import { ref } from 'vue';
 
 interface IProps {
-  value: any
-  id: any
-  isAverage: any
+  value?: any
+  id: number
+  isAverage?: any
 }
 const props = defineProps<IProps>()
 const rating = ref(0)

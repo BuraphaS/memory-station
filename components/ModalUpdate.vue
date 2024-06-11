@@ -54,7 +54,7 @@
                   name="category"
                   class="px-2 ml-2 border rounded-lg"
                   :value="postData?.status"
-                  @change="onInputChange('status', $event.target.value)">
+                  @change="onInputChange('status', ($event.target as HTMLSelectElement).value)">
                   <option>Public</option>
                   <option>Just Friend</option>
                 </select>
@@ -66,7 +66,7 @@
                   name="category"
                   class="px-2 ml-2 border rounded-lg"
                   :value="postData?.type"
-                  @change="onInputChange('type', $event.target.value)">
+                  @change="onInputChange('type', ($event.target as HTMLSelectElement).value)">
                   <option>Travel</option>
                   <option>Food</option>
                 </select>
@@ -131,6 +131,8 @@ interface IProps {
   form: any
 }
 interface IForm {
+  [key: string]: any
+  id: any
   uid: string,
   image: string[],
   topic: string,
@@ -148,6 +150,7 @@ const user: any = useSupabaseUser()
 const props = defineProps<IProps>()
 const selectedImage = ref<string[]>([])
 const postData: Ref<IForm> = ref({
+  id: 0,
   uid: user.value.id,
   image: [],
   topic: '',
@@ -174,7 +177,6 @@ async function fetchProfile (): Promise<void> {
     console.log(error); 
   }
 }
-// const selectedImage = ref<string[]>([])
 
 async function fetchPost (): Promise<void> {
   try {
@@ -195,7 +197,7 @@ async function updatePost() {
   try {
     const { error } = await supabase
       .from('post')
-      .upsert(postData.value)
+      .upsert(postData.value as never)
       .eq('id', postData.value.id)
       .select()
     console.log(user.value);
@@ -250,11 +252,8 @@ async function handleFileUpload(event: Event) {
     }
   }
 }
-const handleRatingUpdate = (rating: any) => {
-  postData.value.rating = rating
-}
 
-function onInputChange(field: string, value: any) {
+function onInputChange(field: keyof IForm, value: any) {
   postData.value[field] = value
 }
 function removeImage(index: number) {
