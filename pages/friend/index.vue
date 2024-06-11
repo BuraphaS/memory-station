@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col justify-center items-center mt-4 mx-auto w-[900px]">
-    <div class="w-[800px] border-2 rounded-lg mt-12">
+  <div class="flex flex-col justify-center items-center mt-4 mx-auto w-[500px]">
+    <div class="w-[600px] border-2 rounded-lg mt-12">
       <ul 
         id="default-tab" 
         data-tabs-toggle="#default-tab-content" 
@@ -16,8 +16,8 @@
                 role="tab" 
                 aria-controls="friends" 
                 aria-selected="false"
-                :class="activeTab === 'friends' ? `mdi mdi-account-group-outline items-center flex justify-center gap-4 text-xl inline-block w-full p-4 text-white bg-primary rounded-s-lg`
-                : `mdi mdi-account-group-outline items-center flex justify-center gap-4 text-xl inline-block w-full p-4 text-gray-900 bg-gray-100 border-r border-gray-200 dark:border-gray-700 rounded-s-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white`" 
+                :class="activeTab === 'friends' ? `mdi mdi-account-group-outline items-center flex justify-center gap-4 text-sm inline-block w-full p-4 text-white bg-primary rounded-s-lg`
+                : `mdi mdi-account-group-outline items-center flex justify-center gap-4 text-sm inline-block w-full p-4 text-gray-900 bg-gray-100 border-r border-gray-200 dark:border-gray-700 rounded-s-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none dark:bg-gray-700 dark:text-white`" 
                 @click="activeTab = 'friends'">
                 Friends
               </button>
@@ -32,8 +32,8 @@
                 role="tab" 
                 aria-controls="search" 
                 aria-selected="false"
-                :class="activeTab === 'search' ? `mdi mdi-magnify items-center flex justify-center gap-4 text-xl inline-block w-full p-4 text-white bg-primary ` 
-                : `mdi mdi-magnify items-center flex justify-center gap-4 text-xl inline-block w-full p-4 text-gray-900 bg-gray-100 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-gray-700 dark:text-white`" 
+                :class="activeTab === 'search' ? `mdi mdi-magnify items-center flex justify-center gap-4 text-sm inline-block w-full p-4 text-white bg-primary ` 
+                : `mdi mdi-magnify items-center flex justify-center gap-4 text-sm inline-block w-full p-4 text-gray-900 bg-gray-100 border-r border-gray-200 dark:border-gray-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-gray-700 dark:text-white`" 
                 @click="activeTab = 'search'">
                 Search
               </button>
@@ -48,8 +48,8 @@
                 role="tab" 
                 aria-controls="request" 
                 aria-selected="false"
-                :class="activeTab === 'request' ? `mdi mdi-account-clock-outline items-center flex justify-center gap-4 text-xl text-white inline-block w-full p-4 bg-primary rounded-e-lg hover:text-gray-700 hover:bg-gray-50`
-                : `mdi mdi-account-clock-outline items-center flex justify-center gap-4 text-xl inline-block w-full p-4 bg-white border-s-0 border-gray-200 dark:border-gray-700 rounded-e-lg hover:text-gray-700 hover:bg-gray-50`"
+                :class="activeTab === 'request' ? `mdi mdi-account-clock-outline items-center flex justify-center gap-4 text-sm text-white inline-block w-full p-4 bg-primary rounded-e-lg hover:text-gray-700 hover:bg-gray-50`
+                : `mdi mdi-account-clock-outline items-center flex justify-center gap-4 text-sm inline-block w-full p-4 bg-white border-s-0 border-gray-200 dark:border-gray-700 rounded-e-lg hover:text-gray-700 hover:bg-gray-50`"
                 @click="activeTab = 'request'">
                 Friend Requests
               </button>
