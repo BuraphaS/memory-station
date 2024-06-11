@@ -70,7 +70,8 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const message = ref('')
 const error = ref(false)
-
+const loading: Ref<boolean> = ref(false)
+  
 const cancel = () => {
   oldPassword.value = ''
   newPassword.value = ''
@@ -85,7 +86,7 @@ const confirm = async () => {
     message.value = 'Passwords do not match'
     return
   }
-
+  loading.value = true
   try {
     if (user) {
       const { error } = await supabase.auth.updateUser({
@@ -96,6 +97,7 @@ const confirm = async () => {
         console.error('Error updating password:', error.message)
         message.value = error.message
       } else {
+        alert('Password updated successfully')
         console.log('Password updated successfully')
         cancel()
       }
@@ -105,6 +107,8 @@ const confirm = async () => {
   } catch (error: any) {
     console.error('Error updating password:', error)
     message.value = error.message
+  } finally {
+    loading.value = false
   }
 }
 
