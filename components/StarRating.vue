@@ -3,15 +3,15 @@
     <div
       v-if="isAverage"
       class="rateAverage">
-      <input type="radio" :id="`avstar5-`+ props.id" :name="'avrate'+ props.id" value="5" v-model="props.value" disabled/>
+      <input type="radio" :id="`avstar5-`+ props.id" :name="'avrate'+ props.id" value="5" v-model="roundedValue" disabled/>
       <label :for="`avstar5-`+ props.id" title="5 stars">5 stars</label>
-      <input type="radio" :id="`avstar4-`+ props.id" :name="'avrate'+ props.id" value="4" v-model="props.value" disabled/>
+      <input type="radio" :id="`avstar4-`+ props.id" :name="'avrate'+ props.id" value="4" v-model="roundedValue" disabled/>
       <label :for="`avstar4-`+ props.id" title="4 stars">4 stars</label>
-      <input type="radio" :id="`avstar3-`+ props.id" :name="'avrate'+ props.id" value="3" v-model="props.value" disabled/>
+      <input type="radio" :id="`avstar3-`+ props.id" :name="'avrate'+ props.id" value="3" v-model="roundedValue" disabled/>
       <label :for="`avstar3-`+ props.id" title="3 stars">3 stars</label>
-      <input type="radio" :id="`avstar2-`+ props.id" :name="'avrate'+ props.id" value="2" v-model="props.value" disabled/>
+      <input type="radio" :id="`avstar2-`+ props.id" :name="'avrate'+ props.id" value="2" v-model="roundedValue" disabled/>
       <label :for="`avstar2-`+ props.id" title="2 stars">2 stars</label>
-      <input type="radio" :id="`avstar1-`+ props.id" :name="'avrate'+ props.id" value="1" v-model="props.value" disabled/>
+      <input type="radio" :id="`avstar1-`+ props.id" :name="'avrate'+ props.id" value="1" v-model="roundedValue" disabled/>
       <label :for="`avstar1-`+ props.id" title="1 star">1 star</label>
     </div>
     <div
@@ -126,6 +126,9 @@ const modifyRating = async (event: any) => {
     console.error('Error:', error);
   }
 }
+const roundedValue = computed(() => {
+  return Math.round(props.value);
+});
 onMounted(async ()=>{
   rating.value = props.value
   await fetchRating()

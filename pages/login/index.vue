@@ -48,7 +48,6 @@ function scrollDown (): void {
 onMounted((): void => {
   if (user) {
     router.replace('/')
-    // router.replace({ name: 'recommend'})
   } else {
     window.addEventListener('scroll', scrollDown)
   }

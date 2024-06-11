@@ -392,6 +392,7 @@ async function deleteLike(): Promise<void> {
         .from('like')
         .delete()
         .eq('uid', user.value.id)
+        .eq('postId', props.id)
         .select()
       if (error) {
         console.error('Error updating post comments:', error)

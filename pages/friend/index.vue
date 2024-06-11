@@ -236,7 +236,6 @@ async function fetchFriend (): Promise<void> {
       .select(`*`)
       .or(`frienduid.eq.${user.value.id},uid.eq.${user.value.id}`)
       .eq('status', 'FRIEND')
-      // .select()
     if (error) {
       console.log(error); 
     } else {

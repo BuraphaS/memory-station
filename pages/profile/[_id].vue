@@ -37,15 +37,15 @@
     <div class="flex gap-20 mt-8">
       <div
         class="text-xl font-semibold">
-        {{ !postData ? '0' : postData.length }}
+        {{ !postData ? '0' : postData?.length }}
         <span class="text-lg font-normal"> Posts</span>
       </div>
       <div class="text-xl font-semibold">
-        {{ !profile?.love ? '0' : profile?.love }}
+        {{ !lovePostData ? '0' : lovePostData?.length }}
         <span class="text-lg font-normal"> Love</span>
       </div>
       <div class="text-xl font-semibold">
-        {{ !profile?.friend ? '0' : profile?.firend }}
+        {{ !friend ? '0' : friend?.length }}
         <span class="text-lg font-normal"> Friends</span>
       </div>
     </div>
@@ -115,26 +115,24 @@
       </div>
       <div v-if="activeTab === 'love'" class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="love" role="tabpanel" aria-labelledby="dashboard-tab">
           <div class="grid grid-cols-3 gap-4">
-            <!-- <div
-              v-for="(item, index) in [...profile.postDetail]"
-              :key="index">
+            <div
+              v-for="(item, index) in lovePostData"
+              :key="index"
+              @click="openComment(item.id)">
               <img 
-                :src="item.img" 
+                :src="item.image[0]"
                 alt="item"
                 class="cursor-pointer post-img">
                 <div class="flex justify-between">
                   <div class="text-sm mdi mdi-heart">
-                    50
+                    <span>{{ item.likes.length }}</span>
                   </div>
-                  <div class="flex">
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                    <div class="text-sm mdi mdi-star"></div>
-                  </div>
+                  <StarRating 
+                    :isAverage="true"
+                    :value="item.ratings" 
+                    :id="item.id"/>
                 </div>
-            </div> -->
+            </div>
           </div>
       </div>
     </div>
@@ -159,6 +157,9 @@ const router = useRouter()
 const route = useRoute()
   
 const loading = ref(true)
+const loveData: Ref<any> = ref([])
+const lovePostData: Ref<any> = ref([])
+
 const profile: Ref<any> = ref()
 const postData: Ref<any> = ref([])
 const activeTab = ref('post');
@@ -243,6 +244,49 @@ async function fetchLike(id: any): Promise<any> {
   } finally {
   }
 }
+async function fetchLovePost (postId: number[]): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('post')
+      .select(`*`)
+      .in('id', postId)
+    if (error) {
+      console.log(error); 
+    } else {
+      lovePostData.value = data;
+
+      const postsWithLikesAndRatings = await Promise.all(
+        lovePostData.value.map(async (post: any) => {
+          const [likes, ratings] = await Promise.all([
+            fetchLike(post.id),
+            fetchRating(post.id),
+          ]);
+          return { ...post, likes, ratings };
+      })
+      )
+      lovePostData.value = postsWithLikesAndRatings;
+    }
+  } catch (error) {
+    console.log(error); 
+  }
+}
+async function fetchLove (): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('like')
+      .select(`postId`)
+      .eq('uid', user.value.id)
+    if (error) {
+      console.log(error); 
+    } else {
+      loveData.value = data
+      const postIds = data.map((item: any) => item.postId);
+      await fetchLovePost(postIds)
+    }
+  } catch (error) {
+    console.log(error); 
+  }
+}
 function openComment (id: any): void {
   postId.value = id
   postComment.value = true
@@ -257,31 +301,11 @@ function editProfile (): void {
 function changePassword (): void {
   router.push({ path: `/setting/change-password/${user.value.id}` })
 }
-// async function fetchLike(): Promise<void> {
-//   try {
-//     const { data, error } = await supabase
-//         .from('like')
-//         .select('status, uid')
-//         .eq('postId', postData.value.id)
-//     if (error) {
-//         console.error(`Error fetching user data for UID :`, error);
-//       } else {
-//         like.value = data
-//       }
-//   } catch (error) {
-//     console.error('Error:', error);
-//   } finally {
-//     loading.value = false;
-//   }
-// }
 async function fetchFriend(): Promise<void> {
   try {
     const { data, error } = await supabase
         .from('friend')
         .select('*')
-        // .eq('frienduid', route.params._id)
-        // .eq('uid', user.value.id)
-        // .single()
     if (error) {
         console.error(`Error fetching user data for UID ${status}:`, error);
         return
@@ -305,10 +329,8 @@ async function fetchFilterFriend(): Promise<void> {
       return
     } else if (friendRequest) {
       if (friendRequest.uid === user.value.id && friendRequest.frienduid === route.params._id) {
-        // Current user sent a friend request
         status.value = friendRequest
       } else if (friendRequest.uid === route.params._id && friendRequest.frienduid === user.value.id) {
-        // Current user received a friend request
         status.value = friendRequest
       }
     }
@@ -374,6 +396,8 @@ const toggleFriend = async (): Promise<void> => {
     await sendFriend()
   } else if (status.value.status === 'WAITING' && profile?.value.uid !== user.value.id) {
     await deleteFriend()
+  } else if (status.value.status === 'FRIEND' && profile?.value.uid !== user.value.id) {
+    await deleteFriend()
   } else if (status.value.status === 'WAITING' && profile?.value.uid === user.value.id) {
     await acceptFriend()
   } else {
@@ -411,7 +435,7 @@ onMounted(() => {
   fetchPost()
   fetchProfile()
   fetchFriend()
-  // fetchLike()
+  fetchLove()
 })
 </script>
 
