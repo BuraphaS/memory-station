@@ -57,7 +57,7 @@
                 </span>
               </div>
               <div class="my-4 border-b border-border"></div>
-              <div class="overflow-auto h-[500px]">
+              <div class="overflow-auto h-[400px]">
                 <div
                   v-for="(item, index) in comment"
                   :key="index"
