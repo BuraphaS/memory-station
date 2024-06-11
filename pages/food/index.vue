@@ -26,13 +26,14 @@ const postCreate: Ref<boolean> = ref(false)
 const postData: Ref<any> = ref([])
 const cardInfo: Ref<any> = ref()
 const friend: Ref<any> = ref([])
-
+const loading: Ref<boolean> = ref(false)
 function generateRandomFilename(extension: string): string {
   const randomString = Math.random().toString(36).substring(2, 15);
   return `${randomString}.${extension}`;
 }
 
 async function uploadImage(file: File,uid: string): Promise<string | null> {
+  loading.value = true
   try {
     const extension = file.name.split('.').pop();
     const randomFilename = generateRandomFilename(extension || 'jpg');
@@ -52,6 +53,8 @@ async function uploadImage(file: File,uid: string): Promise<string | null> {
   } catch (error) {
     console.error('Error in uploadImage:', error);
     return null;
+  } finally {
+  loading.value = false
   }
 }
   
@@ -97,6 +100,7 @@ async function fetchPostsOwn(): Promise<void> {
 }
   
 async function createPost(form: any): Promise<void> {
+  loading.value = true
   try {
     const imageUrls: string[] = [];
     for (const file of form.image) {
@@ -126,12 +130,11 @@ async function createPost(form: any): Promise<void> {
   }finally{
     handleCloseModal()
     await fetchPosts()
+    loading.value = false
   }
 }
 async function fetchPostFriend(info: any): Promise<void> {
   try {
-    console.log(info);
-    
     const userUids = info.map((c: { uid: any; }) => c.uid).filter((uid: any) => uid !== user.value.id)
     const friendUids = info.map((f: { frienduid: any; }) => f.frienduid).filter((frienduid: any) => frienduid !== user.value.id)
     

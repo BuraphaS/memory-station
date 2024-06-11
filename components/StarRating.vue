@@ -32,20 +32,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { type Ref,ref } from 'vue';
 
 interface IProps {
   value?: any
   id: number
   isAverage?: any
 }
+
+const supabase = useSupabaseClient()
 const props = defineProps<IProps>()
 const rating = ref(0)
-const user: Ref<any> = useSupabaseUser();
-const supabase = useSupabaseClient();
+const loading: Ref<boolean> = ref(false)
+const user: Ref<any> = useSupabaseUser()
 const emit = defineEmits(['rating']);
 
 const fetchRating = async () => {
+  loading.value = true
   try {
     const { data, error } = await supabase
       .from('rating')
@@ -65,6 +68,7 @@ const fetchRating = async () => {
   }
 }
 const updateRating = async (event: any) => {
+  loading.value = true
   try {
     const { data, error } = await supabase
       .from('rating')
@@ -79,18 +83,16 @@ const updateRating = async (event: any) => {
       await modifyRating(event.target._value);
     } else {
       console.error('Error determining whether to send or update rating:', error);
-    }
-
+    } 
     emit('rating', rating.value);
   } catch (error) {
     console.error('Error:', error);
-  }
-  console.log('Event value:', event.target.value);
-  console.log('Rating:', rating.value);
-
-  
+  } finally {
+  loading.value = false
+    }  
 }
 const sendRating = async (event: any) => {
+  loading.value = true
   try {
     const { error } = await supabase
       .from('rating')
@@ -106,9 +108,12 @@ const sendRating = async (event: any) => {
     }
   } catch (error) {
     console.error('Error:', error);
+  } finally {
+  loading.value = false
   }
 }
 const modifyRating = async (event: any) => {
+  loading.value = true
   try {
     const { error } = await supabase
       .from('rating')
@@ -124,6 +129,8 @@ const modifyRating = async (event: any) => {
     }
   } catch (error) {
     console.error('Error:', error);
+  } finally {
+  loading.value = false
   }
 }
 const roundedValue = computed(() => {

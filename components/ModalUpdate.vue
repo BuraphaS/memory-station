@@ -149,6 +149,7 @@ const supabase = useSupabaseClient()
 const user: any = useSupabaseUser()
 const props = defineProps<IProps>()
 const selectedImage = ref<string[]>([])
+const loading: Ref<boolean> = ref(false)
 const postData: Ref<IForm> = ref({
   id: 0,
   uid: user.value.id,
@@ -194,6 +195,7 @@ async function fetchPost (): Promise<void> {
   }
 }
 async function updatePost() {
+  loading.value = true
   try {
     const { error } = await supabase
       .from('post')
@@ -210,6 +212,8 @@ async function updatePost() {
     }
   } catch (error: any) {
     alert(error.message)
+  } finally {
+  loading.value = false
   }
 }
 function generateRandomFilename(extension: string): string {
@@ -218,6 +222,7 @@ function generateRandomFilename(extension: string): string {
 }
 
 async function uploadImage(file: File): Promise<string | null> {
+  loading.value = true
   try {
     const extension = file.name.split('.').pop();
     const randomFilename = generateRandomFilename(extension || 'jpg');
@@ -233,6 +238,8 @@ async function uploadImage(file: File): Promise<string | null> {
   } catch (error) {
     console.error('Error in uploadImage:', error);
     return null;
+  } finally {
+  loading.value = false
   }
 }
 async function handleFileUpload(event: Event) {

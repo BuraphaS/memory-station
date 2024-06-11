@@ -177,11 +177,10 @@ const users = ref()
 const searchResults: Ref<any> = ref([])
 const friendRequest: Ref<any> = ref([])
 const friend: Ref<any> = ref([])
-
+const loading: Ref<boolean> = ref(false)
+  
 async function fetchProfileComment(info: any): Promise<void> {
   try {
-    console.log(info);
-    
     const userUids = info.map((c: { uid: any; }) => c.uid).filter((uid: any) => uid !== user.value.id)
     const friendUids = info.map((f: { frienduid: any; }) => f.frienduid).filter((frienduid: any) => frienduid !== user.value.id)
     
@@ -297,6 +296,7 @@ async function onSearch (): Promise<void> {
   }
 }
 async function acceptFriend(uid: any): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('friend')
@@ -313,9 +313,12 @@ async function acceptFriend(uid: any): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+    loading.value = false
     }
 }
 async function deleteFriend(uid: any): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('friend')
@@ -330,6 +333,8 @@ async function deleteFriend(uid: any): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+    loading.value = false
     }
 }
 onMounted(()=>{

@@ -250,7 +250,7 @@ async function sendComment(): Promise<void> {
       image: myProfile.value.image,
       }
     )
-
+    loading.value = true
     try {
       const { data, error } = await supabase
         .from('comment')
@@ -267,10 +267,13 @@ async function sendComment(): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally{
+  loading.value = false
     }
   }
 }
 async function sendEditComment(event: any, id: any): Promise<void> {
+  loading.value = true
   try {
     const { data, error } = await supabase
       .from('comment')
@@ -289,9 +292,12 @@ async function sendEditComment(event: any, id: any): Promise<void> {
     }
   } catch (error) {
     console.error('Error saving new comment:', error)
+  } finally {
+  loading.value = false
   }
 }
 async function deleteComment(id: any): Promise<void> {
+  loading.value = true
   try {
     const { data, error } = await supabase
       .from('comment')
@@ -305,6 +311,8 @@ async function deleteComment(id: any): Promise<void> {
     }
   } catch (error) {
     console.error('Error saving new comment:', error)
+  } finally {
+  loading.value = false
   }
 }
 async function fetchLike(): Promise<void> {
@@ -325,6 +333,7 @@ async function fetchLike(): Promise<void> {
   }
 }
 async function sendLike(): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('like')
@@ -341,9 +350,12 @@ async function sendLike(): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+  loading.value = false
     }
 }
 async function deleteLike(): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('like')
@@ -357,6 +369,8 @@ async function deleteLike(): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+  loading.value = false
     }
 }
 const fetchRating = async () => {

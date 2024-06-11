@@ -34,6 +34,7 @@ function generateRandomFilename(extension: string): string {
 }
 
 async function uploadImage(file: File,uid: string): Promise<string | null> {
+  loading.value = true
   try {
     const extension = file.name.split('.').pop();
     const randomFilename = generateRandomFilename(extension || 'jpg');
@@ -53,6 +54,8 @@ async function uploadImage(file: File,uid: string): Promise<string | null> {
   } catch (error) {
     console.error('Error in uploadImage:', error);
     return null;
+  } finally {
+  loading.value = false
   }
 }
   
@@ -131,8 +134,6 @@ async function createPost(form: any): Promise<void> {
 }
 async function fetchPostFriend(info: any): Promise<void> {
   try {
-    console.log(info);
-    
     const userUids = info.map((c: { uid: any; }) => c.uid).filter((uid: any) => uid !== user.value.id)
     const friendUids = info.map((f: { frienduid: any; }) => f.frienduid).filter((frienduid: any) => frienduid !== user.value.id)
     
@@ -172,7 +173,6 @@ async function fetchFriend (): Promise<void> {
       .select(`*`)
       .or(`frienduid.eq.${user.value.id},uid.eq.${user.value.id}`)
       .eq('status', 'FRIEND')
-      // .select()
     if (error) {
       console.log(error); 
     } else {

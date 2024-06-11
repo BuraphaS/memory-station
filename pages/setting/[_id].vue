@@ -134,6 +134,7 @@ function generateRandomFilename(extension: string): string {
   return `${randomString}.${extension}`;
 }
 async function uploadImage(file: File): Promise<string | null> {
+  loading.value = true
   try {
     const extension = file.name.split('.').pop();
     const randomFilename = generateRandomFilename(extension || 'jpg');
@@ -149,6 +150,8 @@ async function uploadImage(file: File): Promise<string | null> {
   } catch (error) {
     console.error('Error in uploadImage:', error);
     return null;
+  } finally {
+    loading.value = false
   }
 }
 async function fetchProfile(): Promise<void> {

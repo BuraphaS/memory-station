@@ -339,6 +339,7 @@ async function fetchFilterFriend(): Promise<void> {
   }
 }
 async function sendFriend(): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('friend')
@@ -355,9 +356,12 @@ async function sendFriend(): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+      loading.value = false
     }
 }
 async function acceptFriend(): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('friend')
@@ -373,9 +377,12 @@ async function acceptFriend(): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+      loading.value = false
     }
 }
 async function deleteFriend(): Promise<void> {
+  loading.value = true
     try {
       const { data, error } = await supabase
         .from('friend')
@@ -389,6 +396,8 @@ async function deleteFriend(): Promise<void> {
       }
     } catch (error) {
       console.error('Error saving new comment:', error)
+    } finally {
+      loading.value = false
     }
 }
 const toggleFriend = async (): Promise<void> => {
